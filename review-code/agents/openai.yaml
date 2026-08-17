@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Code"
+  short_description: "Review code changes and security risks"
+  default_prompt: "Use $review-code to review the current changes for concrete defects, regressions, security issues, and vulnerable dependencies."
