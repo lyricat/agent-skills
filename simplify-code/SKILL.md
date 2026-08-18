@@ -1,16 +1,22 @@
 ---
 name: simplify-code
-description: Simplify existing code from first principles by preserving required behavior and removing unnecessary concepts, branches, states, indirection, abstractions, configuration, and dependencies. Use when asked to simplify code, remove overengineering, flatten abstractions, eliminate thin wrappers or duplicate state, reduce a refactor, or make an implementation easier to reason about without changing its contract. Do not use for feature work, style-only formatting, or behavior-changing redesign unless simplification is explicitly part of the request.
+description: "Simplify existing code through explicit first-principles reasoning: derive the smallest implementation from required behavior and present constraints, then remove unnecessary concepts, branches, states, indirection, abstractions, configuration, and dependencies. Use when asked to simplify code, remove overengineering, flatten abstractions, eliminate thin wrappers or duplicate state, reduce a refactor, or make an implementation easier to reason about without changing its contract. Do not use for feature work, style-only formatting, or behavior-changing redesign unless simplification is explicitly part of the request."
 ---
 
 # Simplify Code
 
-## Objective
+## First-Principles Objective
+
+Use first-principles reasoning throughout. Begin with required observable behavior and concrete constraints. Do not treat the current structure, named design patterns, framework conventions, or hypothetical future needs as requirements.
 
 Treat simplification as constrained minimization:
 
 1. Preserve required behavior, public contracts, data, safety properties, and supported environments.
 2. Minimize the concepts, mutable states, branches, call hops, configuration modes, dependencies, and duplicated rules needed to satisfy those constraints.
+
+Make every existing or proposed element justify its existence. Ask which required behavior or constraint would break if the element were removed. Keep it only when repository evidence provides a concrete answer; when evidence is incomplete, investigate or stop rather than guess.
+
+First-principles reasoning does not mean rewriting from scratch. Prefer the smallest change that moves the implementation toward the minimum justified design.
 
 Do not optimize for fewer lines alone. Shorter code is worse when it hides state, weakens validation, merges distinct concepts, or makes failure behavior harder to trace.
 
@@ -24,6 +30,7 @@ Before editing:
 
 - Read applicable repository instructions.
 - Identify the requested files, symbols, or behavior. Do not silently widen the scope.
+- Separate required behavior and constraints from current implementation choices before deciding which structures deserve to remain.
 - Inspect callers, implementations, tests, documentation, configuration, serialized data, and public interfaces far enough to learn the actual contract.
 - Record success, failure, retry, cancellation, cleanup, concurrency, and partial-completion behavior that must remain unchanged.
 - Identify compatibility constraints such as API shape, CLI output and exit status, schemas, file formats, protocols, persisted data, and rolling upgrades.
@@ -49,9 +56,18 @@ Look for concrete opportunities to remove:
 - custom machinery already provided with the required semantics by the language, standard library, or an existing repository primitive;
 - obsolete compatibility paths, feature flags, migrations, fallbacks, imports, dependencies, and dead code whose removal is supported by repository evidence.
 
-A simplification must reduce at least one named concept, state, branch path, call hop, configuration mode, dependency, or duplicated rule. Reject it when the reduction merely moves complexity elsewhere or introduces a broader abstraction than the behavior requires.
-
 Small duplication can be simpler than a generalized helper. Extract shared code only when the callers implement the same rule and the abstraction has a stable name, contract, and ownership.
+
+## Apply the First-Principles Gate
+
+For every proposed change, answer all four questions:
+
+1. Which required behavior or concrete constraint must remain?
+2. What repository evidence shows that requirement is current?
+3. Which named concept, state, branch path, call hop, configuration mode, dependency, or duplicated rule will disappear?
+4. Does the change remove that complexity instead of relocating or hiding it?
+
+Reject the change when these answers are unsupported, when it introduces a broader abstraction than the present behavior requires, or when it optimizes only syntax or line count.
 
 ## Choose the Smallest Sound Transformation
 
@@ -89,6 +105,7 @@ Do not weaken assertions, delete meaningful cases, or rewrite tests merely to ac
 - Keep comments that explain non-obvious constraints; remove or update comments that describe deleted structure.
 - Format changed files with the repository's configured formatter.
 - Inspect the final diff for accidental behavior changes and unnecessary churn.
+- Reapply the first-principles gate to the final diff. Every retained or added structure must map to a required behavior or concrete constraint.
 - Run relevant static checks, builds, and tests. Report only commands actually run and their exact outcomes.
 
 If behavior, reachability, or compatibility cannot be established, make a smaller provable change or stop and name the exact missing evidence. Do not churn code to produce a non-empty diff.
