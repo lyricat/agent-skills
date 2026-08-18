@@ -96,7 +96,10 @@ Before changing formal code logic:
 
 Honor repository-specific testing rules. Do not add tests for documentation, visual-only UI work, log additions, or copy changes unless repository policy requires them.
 
-Do not weaken assertions, delete meaningful cases, or rewrite tests merely to accept changed behavior. Update a test only when its implementation details were intentionally coupled to a removed internal structure and its behavioral assertion remains intact.
+Do not weaken assertions or rewrite tests merely to accept changed behavior. When a test is coupled to an intentionally removed internal structure:
+
+- Rewrite it against a supported boundary when it still protects required behavior, a contract, a regression, or a safety property.
+- Delete it only when it exclusively verifies the removed structure and protects none of those properties.
 
 ## Implement and Verify
 
