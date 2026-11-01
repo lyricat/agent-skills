@@ -1,7 +1,6 @@
 # .factory/factory.toml: how the factory works on this repository.
 # Copy it into the repository, set the values, and commit it with empty
-# folders new/ blocked/ building/ review/ ready/ done/ stop/ (a .gitkeep
-# in each).
+# folders new/ review/ ready/ done/ stop/ (a .gitkeep in each).
 
 # The branch you merge into, and the remote the factory pushes to.
 base = "master"
@@ -29,7 +28,7 @@ rules = [
   "Scripted tests get a throwaway HOME.",
 ]
 
-# Fix rounds on one item before it is blocked.
+# Fix rounds on one item before the factory stops and asks you.
 max_rounds = 3
 
 # Run when an item reaches ready/; {title} and {text} are filled in.

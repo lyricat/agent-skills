@@ -152,10 +152,8 @@ svg .csub { font-size: 10.5px; fill: var(--muted); }
 ├── src/ …
 └── .factory/
     ├── factory.toml         <span class="c">test command, rules</span>
-    ├── <span class="y">new/</span>                 <span class="c">you add here</span>
+    ├── <span class="y">new/</span>                 <span class="c">you add here; not built yet</span>
     │   └── <span class="y">0016-search-box.md</span>
-    ├── blocked/             <span class="c">a question for you</span>
-    ├── building/
     ├── review/              <span class="c">built: read it</span>
     │   └── 0013-sync-icons.md
     ├── ready/               <span class="c">yours to merge</span>
@@ -189,7 +187,7 @@ round: 1
 Fetch the icons at start and when the
 server says they changed.</span>
 
-<span class="f">## factory · 2026-11-03 09:30
+<span class="f">## factory · question · 2026-11-03 09:30
 1. Keep the old icons offline? Default: yes.</span>
 
 <span class="y">## alex · 2026-11-03 12:00
@@ -213,7 +211,7 @@ Round 1: the cache stays (icons.go:90).</span></pre>
       <ul class="notes">
         <li><b>Header</b><span>Between the <code>---</code> lines; the factory fills it in. You can leave it out when you write a new file.</span></li>
         <li><b>Title</b><span>The first <code>#</code> line: what you want.</span></li>
-        <li><b>Conversation</b><span>Sections headed <code>## name · time</code>, added at the end, never edited. It replaces an issue tracker's comments: questions, answers, review notes.</span></li>
+        <li><b>Conversation</b><span>Sections headed <code>## name · time</code>, added at the end, never edited. It replaces an issue tracker's comments: questions, answers, review notes. A <code>question</code> section from the factory means the item waits for your answer, in whatever folder it is.</span></li>
         <li><b>Plan</b><span>Once the item is clear, the factory writes a <code>plan</code> section: behaviour, scope, decisions, how it's checked. It's the brief Claude Code builds from, and in <code>done/</code> the file keeps the whole story.</span></li>
         <li><b>Review notes</b><span>Write <code>file:line: what to change</code>. The next pass fixes it on the same branch and answers each point.</span></li>
       </ul>
@@ -252,7 +250,7 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <li><b>read</b><span>Files the agent reads before it analyses a request or builds it: your conventions, architecture, design rules.</span></li>
         <li><b>never</b><span>Paths the agent must not change, on any branch. A build that touches one is undone.</span></li>
         <li><b>rules</b><span>Extra instructions for Claude Code in this repository, on top of the general ones: what not to touch on this machine, how to test safely.</span></li>
-        <li><b>max_rounds</b><span>Fix rounds on one item before the agent stops and lists what's left in <code>blocked/</code>.</span></li>
+        <li><b>max_rounds</b><span>Fix rounds on one item before the agent stops and asks you, listing what's left.</span></li>
         <li><b>notify</b><span>Run when an item reaches <code>ready/</code>; <code>{title}</code> and <code>{text}</code> are filled in. Leave it out to get the news only in the pass's summary.</span></li>
       </ul>
     </div>
@@ -261,45 +259,36 @@ Round 1: the cache stays (icons.go:90).</span></pre>
   <section aria-labelledby="move-h">
     <span class="kicker">2 · Progress</span>
     <h2 id="move-h">Who moves a file between folders</h2>
-    <p>The factory moves almost every file. You move one only to add it, to park or resume it, or to close it after merging. Orange folders wait for you.</p>
+    <p>The factory moves every file except to add, park or resume one. A question never moves a file: it waits where it is until you answer. Orange folders wait for you.</p>
     <div class="figure">
-      <svg viewBox="0 0 820 300" role="img" aria-label="Folders and who moves files between them">
+      <svg viewBox="0 0 820 280" role="img" aria-label="Folders and who moves files between them">
         <defs>
           <marker id="af" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-f" d="M0,0 L10,5 L0,10 z"/></marker>
           <marker id="ay" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-y" d="M0,0 L10,5 L0,10 z"/></marker>
         </defs>
-        <path class="edge" d="M150 104 L198 104" marker-end="url(#af)"/>
-        <text class="elabel" x="174" y="96" text-anchor="middle">clear</text>
-        <path class="edge" d="M310 104 L358 104" marker-end="url(#af)"/>
-        <text class="elabel" x="334" y="96" text-anchor="middle">built</text>
-        <path class="edge" d="M470 104 L518 104" marker-end="url(#af)"/>
-        <text class="elabel" x="494" y="96" text-anchor="middle">all good</text>
-        <path class="edge" d="M90 128 L90 198" marker-end="url(#af)"/>
-        <text class="elabel" x="82" y="166" text-anchor="end">unclear</text>
-        <path class="edge" d="M140 200 L140 130" marker-end="url(#af)"/>
-        <text class="elabel" x="148" y="166">you answered</text>
-        <path class="edge" d="M415 128 Q 400 230 152 230" marker-end="url(#af)"/>
-        <text class="elabel" x="300" y="252" text-anchor="middle">tests keep failing, too many rounds</text>
-        <path class="edge" d="M394 80 C 384 36, 446 36, 436 78" marker-end="url(#af)"/>
-        <text class="elabel" x="415" y="30" text-anchor="middle">your review note: fix round</text>
-        <path class="edge" d="M575 80 Q 520 40 462 82" marker-end="url(#af)"/>
-        <text class="elabel" x="560" y="46" text-anchor="start">you asked more</text>
-        <path class="edge you" d="M630 104 L678 104" marker-end="url(#ay)"/>
-        <text class="elabel" x="654" y="96" text-anchor="middle">merged</text>
-        <path class="edge you" d="M90 20 L90 78" marker-end="url(#ay)"/>
-        <text class="elabel" x="98" y="34">you add</text>
-        <path class="edge you" d="M700 200 L700 130" marker-end="url(#ay)"/>
-        <text class="elabel" x="708" y="160">resume</text>
-        <text class="elabel" x="600" y="236" text-anchor="end">any file, any time:</text>
-        <text class="elabel" x="600" y="250" text-anchor="end">park it</text>
-        <path class="edge you" d="M606 240 L638 240" marker-end="url(#ay)"/>
-        <g class="dir"><rect x="40" y="80" width="110" height="48"/><text x="95" y="104">new/</text></g>
-        <g class="dir"><rect x="200" y="80" width="110" height="48"/><text x="255" y="104">building/</text></g>
-        <g class="dir waiting"><rect x="360" y="80" width="110" height="48"/><text x="415" y="104">review/</text></g>
-        <g class="dir waiting"><rect x="520" y="80" width="110" height="48"/><text x="575" y="104">ready/</text></g>
-        <g class="dir"><rect x="680" y="80" width="110" height="48"/><text x="735" y="104">done/</text></g>
-        <g class="dir waiting"><rect x="40" y="200" width="110" height="48"/><text x="95" y="224">blocked/</text></g>
-        <g class="dir"><rect x="640" y="200" width="110" height="48"/><text x="695" y="224">stop/</text></g>
+        <path class="edge" d="M135 80 C 125 36, 185 36, 175 78" marker-end="url(#af)"/>
+        <text class="elabel" x="150" y="28" text-anchor="middle">unclear: a question, your answer</text>
+        <path class="edge" d="M210 104 L288 104" marker-end="url(#af)"/>
+        <text class="elabel" x="249" y="96" text-anchor="middle">built</text>
+        <path class="edge" d="M325 128 C 315 172, 375 172, 365 130" marker-end="url(#af)"/>
+        <text class="elabel" x="345" y="188" text-anchor="middle">your review note: fix round</text>
+        <path class="edge" d="M400 104 L478 104" marker-end="url(#af)"/>
+        <text class="elabel" x="439" y="96" text-anchor="middle">all good</text>
+        <path class="edge" d="M520 80 Q 470 36 394 80" marker-end="url(#af)"/>
+        <text class="elabel" x="458" y="40" text-anchor="middle">you asked more</text>
+        <path class="edge" d="M590 104 L668 104" marker-end="url(#af)"/>
+        <text class="elabel" x="629" y="96" text-anchor="middle">you merged</text>
+        <path class="edge you" d="M20 104 L98 104" marker-end="url(#ay)"/>
+        <text class="elabel" x="58" y="96" text-anchor="middle">you add</text>
+        <path class="edge you" d="M135 210 L135 130" marker-end="url(#ay)"/>
+        <text class="elabel" x="143" y="175">resume</text>
+        <path class="edge you" d="M290 234 L212 234" marker-end="url(#ay)"/>
+        <text class="elabel" x="298" y="238">park any file, any time</text>
+        <g class="dir"><rect x="100" y="80" width="110" height="48"/><text x="155" y="104">new/</text></g>
+        <g class="dir waiting"><rect x="290" y="80" width="110" height="48"/><text x="345" y="104">review/</text></g>
+        <g class="dir waiting"><rect x="480" y="80" width="110" height="48"/><text x="535" y="104">ready/</text></g>
+        <g class="dir"><rect x="670" y="80" width="110" height="48"/><text x="725" y="104">done/</text></g>
+        <g class="dir"><rect x="100" y="210" width="110" height="48"/><text x="155" y="234">stop/</text></g>
       </svg>
     </div>
   </section>
@@ -309,42 +298,45 @@ Round 1: the cache stays (icons.go:90).</span></pre>
     <h2 id="branch-h">How branches work</h2>
     <p>Two kinds of branch. <code>master</code> holds the code you accepted and the board. Each item that gets built has its own branch, <code>factory/&lt;number&gt;-&lt;words&gt;</code>, where only the agent commits.</p>
     <div class="figure">
-      <svg viewBox="0 0 840 250" role="img" aria-label="Git graph: master and the branch factory/16-search-box, each commit marked human or agent">
+      <svg viewBox="0 0 890 250" role="img" aria-label="Git graph: master and the branch factory/16-search-box, each commit marked human or agent">
         <text class="bname" x="20" y="64">master</text>
         <text class="bname" x="20" y="174">factory/16-</text>
         <text class="bname" x="20" y="188">search-box</text>
-        <path class="line" d="M110 60 L820 60"/>
-        <path class="line" d="M300 60 C 330 60, 330 170, 360 170 L 600 170 C 640 170, 650 60, 690 60"/>
-        <path class="line" d="M455 60 C 480 60, 485 170, 510 170"/>
+        <path class="line" d="M110 60 L870 60"/>
+        <path class="line" d="M300 60 C 330 60, 330 170, 360 170 L 680 170 C 720 170, 730 60, 770 60"/>
+        <path class="line" d="M520 60 C 545 60, 545 170, 570 170"/>
         <!-- master -->
         <circle class="cm h" cx="130" cy="60" r="8"/>
         <text class="clabel" x="130" y="38" text-anchor="middle">new: 16</text>
         <text class="csub" x="130" y="24" text-anchor="middle">board</text>
         <circle class="cm a" cx="215" cy="60" r="8"/>
-        <text class="clabel" x="215" y="38" text-anchor="middle">16 → blocked</text>
+        <text class="clabel" x="215" y="38" text-anchor="middle">16 question</text>
         <text class="csub" x="215" y="24" text-anchor="middle">board</text>
-        <circle class="cm a" cx="300" cy="60" r="8"/>
-        <text class="clabel" x="300" y="38" text-anchor="middle">16 → building</text>
+        <circle class="cm h" cx="300" cy="60" r="8"/>
+        <text class="clabel" x="300" y="38" text-anchor="middle">answer: 16</text>
         <text class="csub" x="300" y="24" text-anchor="middle">board</text>
-        <circle class="cm h" cx="455" cy="60" r="8"/>
-        <text class="clabel" x="455" y="38" text-anchor="middle">merge 15</text>
-        <text class="csub" x="455" y="24" text-anchor="middle">another item</text>
-        <circle class="cm h" cx="690" cy="60" r="8"/>
-        <text class="clabel" x="690" y="38" text-anchor="middle">merge 16</text>
-        <text class="csub" x="690" y="24" text-anchor="middle">you accept</text>
-        <circle class="cm h" cx="775" cy="60" r="8"/>
-        <text class="clabel" x="775" y="38" text-anchor="middle">16 → done</text>
-        <text class="csub" x="775" y="24" text-anchor="middle">board</text>
+        <circle class="cm a" cx="440" cy="60" r="8"/>
+        <text class="clabel" x="440" y="38" text-anchor="middle">16 → review</text>
+        <text class="csub" x="440" y="24" text-anchor="middle">board</text>
+        <circle class="cm h" cx="520" cy="60" r="8"/>
+        <text class="clabel" x="520" y="38" text-anchor="middle">merge 15</text>
+        <text class="csub" x="520" y="24" text-anchor="middle">another item</text>
+        <circle class="cm h" cx="770" cy="60" r="8"/>
+        <text class="clabel" x="770" y="38" text-anchor="middle">merge 16</text>
+        <text class="csub" x="770" y="24" text-anchor="middle">you accept</text>
+        <circle class="cm a" cx="845" cy="60" r="8"/>
+        <text class="clabel" x="845" y="38" text-anchor="middle">16 → done</text>
+        <text class="csub" x="845" y="24" text-anchor="middle">board</text>
         <!-- branch -->
         <circle class="cm a" cx="400" cy="170" r="8"/>
         <text class="clabel" x="400" y="198" text-anchor="middle">search box</text>
         <text class="csub" x="400" y="213" text-anchor="middle">Claude Code</text>
-        <circle class="cm a" cx="510" cy="170" r="8"/>
-        <text class="clabel" x="510" y="198" text-anchor="middle">merge master</text>
-        <text class="csub" x="510" y="213" text-anchor="middle">master moved on</text>
-        <circle class="cm a" cx="600" cy="170" r="8"/>
-        <text class="clabel" x="600" y="198" text-anchor="middle">fix round 1</text>
-        <text class="csub" x="600" y="213" text-anchor="middle">your review note</text>
+        <circle class="cm a" cx="570" cy="170" r="8"/>
+        <text class="clabel" x="570" y="198" text-anchor="middle">merge master</text>
+        <text class="csub" x="570" y="213" text-anchor="middle">master moved on</text>
+        <circle class="cm a" cx="670" cy="170" r="8"/>
+        <text class="clabel" x="670" y="198" text-anchor="middle">fix round 1</text>
+        <text class="csub" x="670" y="213" text-anchor="middle">your review note</text>
       </svg>
     </div>
     <div class="legend">
@@ -356,7 +348,7 @@ Round 1: the cache stays (icons.go:90).</span></pre>
       <li><strong>Build and fix.</strong> Claude Code commits the code on that branch, and every fix round adds commits to the same branch. The agent pushes it; it never force-pushes or rewrites it.</li>
       <li><strong>Keeping up.</strong> When <code>master</code> moves on and the branch no longer merges cleanly, the agent merges <code>master</code> into the branch and runs the tests again. It doesn't rebase, so what you already reviewed keeps its commits.</li>
       <li><strong>Board on master.</strong> The agent's commits on <code>master</code> only move files and add sections under <code>.factory/</code>. It never puts code on <code>master</code>.</li>
-      <li><strong>Finish.</strong> You merge the branch into <code>master</code>. Deleting it afterwards is yours too; the agent never deletes a branch.</li>
+      <li><strong>Finish.</strong> You merge the branch into <code>master</code>. For a file in <code>ready/</code>, the next pass sees the merge and moves it to <code>done/</code>; otherwise, or after a squash or rebase merge, move it yourself. Deleting the branch is yours too; the agent never deletes a branch.</li>
     </ul>
   </section>
 
@@ -370,9 +362,8 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <div class="body">
           <h3>See what waits for you</h3>
           <div class="box"><pre><span class="p">$ </span>git pull
-<span class="p">$ </span>ls .factory/blocked .factory/review .factory/ready
-<span class="o">.factory/blocked:
-.factory/review:
+<span class="p">$ </span>python3 board.py -o board.html     <span class="c"># or: ls .factory/review .factory/ready</span>
+<span class="o">.factory/review:
 .factory/ready:
 0012-export-csv.md</span></pre></div>
         </div>
@@ -381,11 +372,9 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <span class="t you">09:05</span>
         <div class="body">
           <h3>Merge what's ready</h3>
-          <p>Read the branch; merge it; move the file to <code>done/</code> in the same push.</p>
+          <p>Read the branch and merge it. The next pass moves the file to <code>done/</code>.</p>
           <div class="box"><pre><span class="p">$ </span>git diff master...origin/factory/12-export-csv
-<span class="p">$ </span>git merge origin/factory/12-export-csv
-<span class="p">$ </span>git mv .factory/ready/0012-export-csv.md .factory/done/
-<span class="p">$ </span>git commit -m "done: 12" && git push</pre></div>
+<span class="p">$ </span>git merge origin/factory/12-export-csv && git push</pre></div>
         </div>
       </li>
       <li>
@@ -405,16 +394,16 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <span class="t fac">09:30</span>
         <div class="body">
           <h3>A pass runs</h3>
-          <p>It reads #16, finds one unclear point, writes the question at the end of the file and moves it to <code>blocked/</code>. Then it pushes.</p>
-          <div class="box"><pre><span class="o">16 search-box   new/ → blocked/   1 question</span></pre></div>
+          <p>It reads #16, finds one unclear point, writes a question section at the end of the file and pushes. The file stays in <code>new/</code> and waits for you.</p>
+          <div class="box"><pre><span class="o">16 search-box   new/   1 question</span></pre></div>
         </div>
       </li>
       <li>
         <span class="t you">10:00</span>
         <div class="body">
           <h3>Answer the question</h3>
-          <p>Add your section at the end and push. Leave the file where it is; the factory moves it.</p>
-          <div class="box"><pre><span class="p">$ </span>git pull && $EDITOR .factory/blocked/0016-search-box.md
+          <p>Add your section at the end and push. Leave the file where it is.</p>
+          <div class="box"><pre><span class="p">$ </span>git pull && $EDITOR .factory/new/0016-search-box.md
 <span class="add">  ## alex · 2026-11-04 10:00
   Yes, case-insensitive.</span>
 <span class="p">$ </span>git commit -am "answer: 16" && git push</pre></div>
@@ -425,14 +414,14 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <div class="body">
           <h3>The next pass builds it</h3>
           <p>A plan section in the item file, the code on <code>factory/16-search-box</code>, tests run, branch pushed, file moved to <code>review/</code>, and a notification for you.</p>
-          <div class="box"><pre><span class="o">16 search-box   blocked/ → building/ → review/   branch factory/16-search-box</span></pre></div>
+          <div class="box"><pre><span class="o">16 search-box   new/ → review/   branch factory/16-search-box</span></pre></div>
         </div>
       </li>
       <li>
         <span class="t you">14:00</span>
         <div class="body">
           <h3>Review: accept, or ask for a change</h3>
-          <p>Read the branch. Good: merge it as at 09:05. Not yet: write what to change, and the next pass fixes it on the same branch.</p>
+          <p>Read the branch. Good: merge it, and <code>git mv</code> the file to <code>done/</code> yourself, since only files in <code>ready/</code> move there on their own. Not yet: write what to change, and the next pass fixes it on the same branch.</p>
           <div class="box"><pre><span class="p">$ </span>git fetch && git diff master...origin/factory/16-search-box
 <span class="p">$ </span>$EDITOR .factory/review/0016-search-box.md
 <span class="add">  ## alex · 2026-11-04 14:00
@@ -447,10 +436,10 @@ Round 1: the cache stays (icons.go:90).</span></pre>
       <table>
         <thead><tr><th>You want to</th><th>Do</th></tr></thead>
         <tbody>
-          <tr><td>See what waits for you</td><td><code>ls .factory/blocked .factory/review .factory/ready</code></td></tr>
+          <tr><td>See what waits for you</td><td><code>python3 board.py -o board.html</code>: the cards marked <i>you</i></td></tr>
           <tr><td>Add a feature or issue</td><td>a file in <code>.factory/new/</code>, push</td></tr>
           <tr><td>Answer, or ask for a change</td><td>add <code>## yourname · time</code> at the end of its file, push</td></tr>
-          <tr><td>Accept a build</td><td>merge its branch, <code>git mv</code> the file to <code>done/</code>, push</td></tr>
+          <tr><td>Accept a build</td><td>merge its branch, push; from <code>ready/</code> the factory moves the file to <code>done/</code>, from <code>review/</code> you <code>git mv</code> it</td></tr>
           <tr><td>Pause or resume</td><td><code>git mv</code> to <code>stop/</code>, or back to <code>new/</code>, push</td></tr>
         </tbody>
       </table>
@@ -467,12 +456,10 @@ Round 1: the cache stays (icons.go:90).</span></pre>
           <tr><td class="path">src/ … on master</td><td><span class="chip h">human</span></td><td>Changes only by your merges. The agent never commits code to <code>master</code>.</td></tr>
           <tr><td class="path">factory/&lt;n&gt;-… branches</td><td><span class="chip a">agent</span></td><td>Claude Code writes the code and fix rounds; the agent pushes, and merges <code>master</code> in when needed. You read them and merge them.</td></tr>
           <tr><td class="path">.factory/factory.toml</td><td><span class="chip h">human</span></td><td>You set the test command, what to read first, the paths the agent must not touch.</td></tr>
-          <tr><td class="path">.factory/new/</td><td><span class="chip h">human</span></td><td>You create files here. The agent only reads and moves them on.</td></tr>
-          <tr><td class="path">.factory/blocked/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The agent moves a file here with a question; you answer in the file. The agent moves it on.</td></tr>
-          <tr><td class="path">.factory/building/</td><td><span class="chip a">agent</span></td><td>Only the agent. Nothing for you to do.</td></tr>
+          <tr><td class="path">.factory/new/</td><td><span class="chip h">human</span></td><td>You create files here. The agent asks its questions in them and moves them on once built; you answer in the file.</td></tr>
           <tr><td class="path">.factory/review/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The agent puts a built item here; you read the branch and write review notes in the file.</td></tr>
-          <tr><td class="path">.factory/ready/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The agent puts a finished item here; you merge it and move the file to <code>done/</code>.</td></tr>
-          <tr><td class="path">.factory/done/</td><td><span class="chip h">human</span></td><td>You move files here after merging. The agent never reads them again.</td></tr>
+          <tr><td class="path">.factory/ready/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The agent puts a finished item here; you merge its branch.</td></tr>
+          <tr><td class="path">.factory/done/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The agent moves a file here from <code>ready/</code> once its branch is merged, and never reads it again. You move the rest: items merged from <code>review/</code>, or by squash or rebase.</td></tr>
           <tr><td class="path">.factory/stop/</td><td><span class="chip h">human</span></td><td>You park a file here, or move it back to <code>new/</code>. The agent ignores this folder.</td></tr>
           <tr><td class="path">header (--- … ---)</td><td><span class="chip a">agent</span></td><td>The branch name and the fix round count.</td></tr>
           <tr><td class="path">## factory · …</td><td><span class="chip a">agent</span></td><td>Questions, the plan, what each build and fix round did.</td></tr>
