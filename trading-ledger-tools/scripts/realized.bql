@@ -1,0 +1,12 @@
+SELECT
+  'Realized P&L after fees converted to USDT' AS scope,
+  MIN(date) AS start_date,
+  MAX(date) AS end_date,
+  ROUND(
+    -NUMBER(ONLY('USDT', SUM(CONVERT(position, 'USDT')))),
+    2
+  ) AS net_usdt
+WHERE
+  account = 'Income:Gains'
+  OR account ~ '^Income:Gains:'
+  OR account ~ '^Expenses:.*Fees$';

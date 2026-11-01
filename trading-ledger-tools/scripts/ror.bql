@@ -1,0 +1,31 @@
+SELECT
+  'Current costed positions' AS scope,
+  SUM(NUMBER(cost_basis)) AS net_cost_basis_usdt,
+  SUM(ABS(NUMBER(cost_basis))) AS gross_cost_basis_usdt,
+  SUM(NUMBER(market_value)) AS market_value_usdt,
+  SUM(NUMBER(market_value)) - SUM(NUMBER(cost_basis)) AS unrealized_usdt,
+  ROUND(
+    100 * SAFEDIV(
+      SUM(NUMBER(market_value)) - SUM(NUMBER(cost_basis)),
+      SUM(ABS(NUMBER(cost_basis)))
+    ),
+    2
+  ) AS return_rate_pct
+FROM (
+  SELECT
+    account,
+    currency,
+    cost_number,
+    cost_date,
+    ONLY('USDT', SUM(COST(position))) AS cost_basis,
+    ONLY('USDT', SUM(VALUE(position))) AS market_value
+  WHERE
+    account ~ '^(Assets|Liabilities):'
+    AND cost_currency = 'USDT'
+  GROUP BY
+    account,
+    currency,
+    cost_number,
+    cost_date
+  HAVING SUM(number) != 0
+);

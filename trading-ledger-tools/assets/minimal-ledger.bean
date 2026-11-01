@@ -1,0 +1,14 @@
+option "title" "Fund Ledger"
+option "operating_currency" "USDT"
+
+; Rename Exchange when the concrete venue is known.
+1970-01-01 open Assets:Exchange:Spot
+1970-01-01 open Liabilities:Loans
+
+1970-01-01 open Equity:OpeningBalances
+1970-01-01 open Equity:Contributions
+1970-01-01 open Equity:Distributions
+1970-01-01 open Equity:Adjustments
+
+1970-01-01 open Income:Gains:Trade
+1970-01-01 open Expenses:Exchange:TradeFees
