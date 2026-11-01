@@ -1,0 +1,40 @@
+# .factory/factory.toml: how the factory works on this repository.
+# Copy it into the repository, set the values, and commit it with empty
+# folders new/ blocked/ building/ review/ ready/ done/ stop/ (a .gitkeep
+# in each).
+
+# The branch you merge into, and the remote the factory pushes to.
+base = "master"
+remote = "origin"
+
+# Names whose "## name · time" sections count as yours: requests,
+# answers and review notes. Sections by other names are read as
+# information only.
+owners = ["alex"]
+
+# What must pass before anything reaches ready/.
+test = "make test"
+
+# Run after changes that need generated files or catalogs updated.
+after_change = []
+
+# Read before analysing a request or building it.
+read = ["AGENTS.md"]
+
+# Paths the factory must never change.
+never = [".github/workflows/", ".factory/factory.toml"]
+
+# Added to the coding agent's rules for this repository.
+rules = [
+  "Scripted tests get a throwaway HOME.",
+]
+
+# Fix rounds on one item before it is blocked.
+max_rounds = 3
+
+# Run when an item reaches ready/; {title} and {text} are filled in.
+notify = "notify-send -a factory {title} {text}"
+
+# The clock for section times and the board page (scripts/board.py),
+# so CI in UTC shows the same times as the files. Default: the machine's.
+timezone = "Europe/Berlin"
