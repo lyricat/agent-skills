@@ -6,18 +6,18 @@
 
 | Skill | 用途 |
 | --- | --- |
-| [`review-code`](review-code/SKILL.md) | 审查工作区、提交、分支、补丁或 PR 中的代码变更，识别具体缺陷、安全风险、兼容性问题和关键测试缺口。依赖发生变化时，还会核对已解析版本的公开漏洞与供应链事件。 |
+| [`review-code`](review-code/SKILL.md) | 审查工作区、提交、分支、补丁或 PR 中的代码变更，识别具体缺陷、代码安全风险、兼容性问题和关键测试缺口。 |
 | [`simplify-code`](simplify-code/SKILL.md) | 在保留行为、公开契约和安全边界的前提下，删除不必要的抽象、分支、状态、间接层、配置和依赖。 |
 
 ### `review-code`
 
 - 只报告能够由代码、测试或权威资料验证的问题。
 - 每条 finding 必须给出具体的触发条件和错误结果示例。
-- 安全审查只覆盖变更涉及的代码、构建和依赖，不检查 DNS 等外部基础设施。
-- 依赖清单或锁文件变化时，核对精确版本、公开安全公告和已披露的供应链事件。
+- 安全审查只覆盖变更涉及的代码和构建逻辑，不检查 DNS 等外部基础设施。
+- 依赖变更只检查具体的构建、API 和运行时兼容性回归；不做供应链安全审计、依赖漏洞扫描或安全公告查询。
 - 默认只审查，不修改文件、提交代码、推送分支或发布评论。
 
-安全检查细则见 [`security-review.md`](review-code/references/security-review.md)，依赖检查细则见 [`dependency-security.md`](review-code/references/dependency-security.md)。
+安全检查细则见 [`security-review.md`](review-code/references/security-review.md)。
 
 ### `simplify-code`
 

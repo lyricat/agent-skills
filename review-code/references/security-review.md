@@ -204,15 +204,12 @@ When a changed line exposes a likely real credential, cite its location and type
 
 ## Review Build and Release Code
 
-- Apply the dependency-specific procedure required by `SKILL.md` whenever dependency resolution or source changes.
 - Treat pull-request content, branch and tag names, commit messages, issue text, generated files, and build metadata as untrusted input to checked-in CI code.
 - Prevent changed workflows from passing secrets or privileged credentials to untrusted code or artifacts.
-- Pin CI actions, build images, toolchains, plugins, and remote includes to an immutable and verified identity where repository policy requires reproducibility or integrity.
 - Review build scripts, lifecycle hooks, code generation, package publication, and updater code as executable security boundaries.
 - Keep secrets out of build arguments, logs, caches, artifacts, source maps, and test reports.
 - Verify changed signing, hashing, update, or artifact-verification code binds artifacts to the expected product, version, platform, and channel.
 - Reject overwrite, rollback, or cross-environment substitution in changed publication or updater logic.
-- Review base images, OS packages, vendored code, compiler plugins, and generated artifacts in addition to application package manifests.
 
 ## Review Native, Unsafe, and Dynamic Execution
 
@@ -272,4 +269,3 @@ Use current official editions at review time and cite the edition actually consu
 - [OWASP Application Security Verification Standard](https://owasp.org/www-project-application-security-verification-standard/) — detailed application control requirements; version 5.0.0 was the stable baseline used to write this file.
 - [OWASP Top 10](https://owasp.org/Top10/) — current web application risk cross-check; use it as an awareness list, not proof of verification.
 - [OWASP API Security Project](https://owasp.org/www-project-api-security/) — API-specific authorization, resource consumption, business-flow, SSRF, and third-party API risks.
-- [NIST Secure Software Development Framework](https://csrc.nist.gov/projects/ssdf) — use only its code-visible build, integrity, release, and vulnerability-response controls for this review scope.

@@ -1,6 +1,6 @@
 ---
 name: review-code
-description: Review proposed code changes in local worktrees, staged changes, commits, branches, patches, or pull requests. Identify concrete defects, regressions, security or data-integrity risks, compatibility breaks, and meaningful gaps in regression coverage. When dependency manifests or lockfiles change, verify added or changed resolved dependency versions against current public vulnerability advisories and disclosed supply-chain incidents. Use when asked to review code, inspect a diff or PR, assess merge safety, or find bugs introduced by a change. Do not use for an open-ended whole-repository audit or style-only feedback unless the user explicitly requests it.
+description: Review proposed code changes in local worktrees, staged changes, commits, branches, patches, or pull requests. Identify concrete defects, regressions, security or data-integrity risks, compatibility breaks, and meaningful gaps in regression coverage. Use when asked to review code, inspect a diff or PR, assess merge safety, or find bugs introduced by a change. Do not use for supply-chain security audits, or for an open-ended whole-repository audit or style-only feedback unless the user explicitly requests it.
 ---
 
 # Review Code
@@ -26,8 +26,6 @@ Report a finding only when all of these statements are true:
 Discard a candidate when it is only a style preference, a speculative concern, an unrelated pre-existing problem, or a generic request for more defensive code. Do not report an issue merely because a different implementation would be cleaner.
 
 Treat absent tests as a finding only when repository policy requires the test or the omission creates a concrete merge risk. Otherwise record a precise untested behavior under residual risks, not as a defect.
-
-For a disclosed dependency vulnerability, treat an exact resolved package, version, and source match against an affected range in a current public advisory as the concrete dependency state. Report application reachability separately as demonstrated or unknown; never infer it from the advisory alone. For a dependency security problem without an advisory, require concrete repository evidence that the changed resolution, integrity, or installation behavior violates a safety property.
 
 ## Review Workflow
 
@@ -96,9 +94,9 @@ Trace attacker-controlled data and delegated authority from entry to effect. Do 
 
 ### 6. Review Dependency Changes
 
-When the diff changes a dependency manifest, lockfile, checksum file, workspace dependency file, or dependency source, read [Dependency Security Review](references/dependency-security.md) completely and follow it.
+Review dependency changes for concrete build, API, and runtime compatibility regressions in the affected code.
 
-Perform a current public advisory check for every added dependency and every resolved dependency version or source changed by the diff, including transitive lockfile changes. If exact resolution or advisory access is unavailable, disclose the unverified dependencies under residual risks. Do not describe an incomplete check as safe.
+Supply-chain security is outside this skill's scope. Do not run dependency vulnerability scans, query public advisories or supply-chain incidents, or audit package provenance and dependency pinning. Do not list these excluded checks as residual risks.
 
 ### 7. Falsify Candidate Findings
 
@@ -125,8 +123,6 @@ Combine impact and likelihood:
 
 Do not raise priority solely because the affected component is important. Explain the actual consequence.
 
-For dependency findings, combine advisory severity with dependency scope, resolved version, reachability evidence, exploit preconditions, and potential impact. Do not copy a CVSS score into the review priority without this analysis.
-
 ## Report the Review
 
 Put findings first, ordered by priority and then by file. Use the language of the user's request.
@@ -140,8 +136,8 @@ Format each finding as:
 One compact paragraph explaining the triggering input or state, the resulting behavior,
 and why the reviewed change causes it. Include the evidence needed to act on the finding.
 
-Example: <specific input values, state transition, request and response, event sequence,
-or dependency version match> -> <specific incorrect or unsafe result>.
+Example: <specific input values, state transition, request and response,
+or event sequence> -> <specific incorrect or unsafe result>.
 ```
 
 Include the `Example` line in every finding. Use actual values or states supported by the reviewed code, test output, or cited documentation. For concurrency findings, give the ordered event sequence. For compatibility findings, give the old caller or input and its new result. Do not restate the abstract finding as the example and do not invent unverified behavior.
@@ -162,7 +158,6 @@ Before returning the review:
 
 - Account for every file and meaningful behavioral hunk in scope.
 - When a security group was triggered, account for its checks or disclose the changed surface and missing evidence under `Residual risks`.
-- When dependency inputs changed, account for every added or changed resolved dependency and the advisory evidence checked for it.
 - Recheck every finding against all seven parts of the finding standard.
 - Ensure each title, location, trigger, and impact is specific enough for the author to verify.
 - Ensure every finding contains an `Example` line with at least one verified trigger and result.
