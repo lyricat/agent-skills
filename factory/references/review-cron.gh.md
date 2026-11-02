@@ -54,8 +54,8 @@ Let R=repos/$REPO. Read .factory/factory.toml for base and timezone:
 3. Review the change against the item's request and plan. Give the
    reviewer the diff and a throwaway checkout for context:
      gh api -H "Accept: application/vnd.github.diff" "$R/compare/<base>...<head>"
-     gh repo clone "$REPO" "$tmp" -- --depth 50 --branch <branch> --single-branch
-   Delete $tmp afterwards.
+     gh repo clone "$REPO" ~/.factory/$REPO/review-<ID> -- --depth 50 --branch <branch> --single-branch
+   Delete that directory afterwards.
 4. Append one section at the end of the item file, signed with
    `git config user.name`, time in factory.toml's timezone:
 

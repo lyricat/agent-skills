@@ -5,23 +5,23 @@ description: "Run one pass of a software factory whose features and issues are p
 
 # Factory
 
-One run of this skill is one pass over a repository's `.factory/` board. A pass is short: it handles what changed since the last pass and stops. Git works as usual for code, branches and merges; only the tracking is plain files. `references/workflow-guide.html` shows the whole workflow for people. `references/review-cron.md` and `references/review-cron.gh.md` are sample prompts for a separate review job (see Reviews).
+One run of this skill is one pass over a repository's `.factory/` board. A pass is short: it handles what changed since the last pass and stops. Git works as usual for code, branches and merges; only the tracking is plain files. `references/workflow-guide.html` shows the whole workflow for people. Sample prompts for scheduled jobs: `references/coder-cron.md` and `references/coder-cron.gh.md` run passes, `references/review-cron.md` and `references/review-cron.gh.md` a separate review job (see Reviews).
 
 ## Inputs
 
-The scheduled task gives:
+The scheduled task may give these; otherwise use the defaults:
 
-- `repo`: a clone of the project that belongs to the factory. Never the owner's working copy, which may hold uncommitted work.
-- `worktrees`: a directory outside `repo` for build worktrees.
+- `repo`: a clone of the project that belongs to the factory, never the owner's working copy, which may hold uncommitted work. Default: the git repository the task runs in.
+- `worktrees`: a directory outside `repo` for build worktrees. Default: `~/.factory/<OWNER>/<REPO>`, from the GitHub remote's `OWNER/REPO` (another host: `~/.factory/<repo directory name>`), created when missing. Review jobs use the same directory.
 
-Stop and say so when either is missing, when `repo` has no `.factory/factory.toml`, or when `repo` has uncommitted changes at the start.
+Stop and say so when `repo` is not a git repository, has no `.factory/factory.toml`, or has uncommitted changes at the start.
 
 ## Access
 
 The runner provides GitHub credentials through git's credential helper and `gh`; they may be short-lived and refreshed by the runner. `references/github-app.md` lists the GitHub App permissions and branch rules they need.
 
 - Never read, print, store or commit a token, and never set up credentials yourself.
-- Run the coding agent and `test` without the factory's credentials: unset `GH_TOKEN` and `GITHUB_TOKEN`, and clear git's credential helper with `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=credential.helper GIT_CONFIG_VALUE_0=`. Only the factory pushes.
+- Run the coding agent and `test` without the factory's credentials: unset `GH_TOKEN` and `GITHUB_TOKEN`, set `GH_CONFIG_DIR` to an empty directory so `gh` has no stored login, and clear git's credential helper with `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=credential.helper GIT_CONFIG_VALUE_0=`. Only the factory pushes.
 - A fetch or push refused for authentication or permission is not a conflict: retry once, then end the pass and say what was refused.
 
 ## The board

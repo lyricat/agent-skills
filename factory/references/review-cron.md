@@ -44,8 +44,12 @@ Use $review-code, run through $coder with Codex.
    and its head: git rev-parse origin/<branch>.
 2. Skip the item if its file already has a review section whose
    `head:` is that commit. A new head (after a fix round) is reviewed again.
-3. Review origin/<base>...origin/<branch> against the item's request and
-   plan (base is in .factory/factory.toml).
+3. Check the branch out in a temporary worktree, so the reviewer reads
+   the branch's files, not base's:
+     git worktree add --detach ~/.factory/$REPO/review-<ID> origin/<branch>
+   Review there, origin/<base>...origin/<branch>, against the item's
+   request and plan (base is in .factory/factory.toml). Then remove it:
+     git worktree remove --force ~/.factory/$REPO/review-<ID>
 4. Append one section at the end of the item file, signed with
    `git config user.name`, time in factory.toml's timezone:
 
