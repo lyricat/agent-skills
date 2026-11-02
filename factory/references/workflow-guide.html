@@ -154,7 +154,7 @@ svg .csub { font-size: 10.5px; fill: var(--muted); }
     ├── factory.toml         <span class="c">test command, rules</span>
     ├── <span class="y">new/</span>                 <span class="c">you add here; not built yet</span>
     │   └── <span class="y">FT16-search-box.md</span>
-    ├── review/              <span class="c">built: read it</span>
+    ├── review/              <span class="c">built: read it (or a review job does)</span>
     │   └── FT13-sync-icons.md
     ├── ready/               <span class="c">yours to merge</span>
     │   └── FT12-export-csv.md
@@ -239,6 +239,7 @@ Round 1: the cache stays (icons.go:90).</span></pre>
   "Scripted tests get a throwaway HOME.",
 ]
 
+<span class="y">review</span> = false
 <span class="y">max_rounds</span> = 3
 <span class="y">notify</span> = "notify-send -a factory {title} {text}"</pre>
       </div>
@@ -250,6 +251,7 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <li><b>read</b><span>Files the agent reads before it analyses a request or builds it: your conventions, architecture, design rules.</span></li>
         <li><b>never</b><span>Paths the agent must not change, on any branch. A build that touches one is undone.</span></li>
         <li><b>rules</b><span>Extra instructions for Claude Code in this repository, on top of the general ones: what not to touch on this machine, how to test safely.</span></li>
+        <li><b>review</b><span>Set it to <code>true</code> when a review job reviews each build. A built item then waits in <code>review/</code> until its latest commit has a review without P0 or P1 findings; a review with them starts a fix round.</span></li>
         <li><b>max_rounds</b><span>Fix rounds on one item before the agent stops and asks you, listing what's left.</span></li>
         <li><b>notify</b><span>Run when an item reaches <code>ready/</code>; <code>{title}</code> and <code>{text}</code> are filled in. Leave it out to get the news only in the pass's summary.</span></li>
       </ul>
@@ -271,7 +273,7 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <path class="edge" d="M210 104 L288 104" marker-end="url(#af)"/>
         <text class="elabel" x="249" y="96" text-anchor="middle">built</text>
         <path class="edge" d="M325 128 C 315 172, 375 172, 365 130" marker-end="url(#af)"/>
-        <text class="elabel" x="345" y="188" text-anchor="middle">your review note: fix round</text>
+        <text class="elabel" x="345" y="188" text-anchor="middle">review note or P0/P1: fix round</text>
         <path class="edge" d="M400 104 L478 104" marker-end="url(#af)"/>
         <text class="elabel" x="439" y="96" text-anchor="middle">all good</text>
         <path class="edge" d="M520 80 Q 470 36 394 80" marker-end="url(#af)"/>
@@ -421,7 +423,7 @@ FT12-export-csv.md</span></pre></div>
         <span class="t you">14:00</span>
         <div class="body">
           <h3>Review: accept, or ask for a change</h3>
-          <p>Read the branch. Good: merge it, and <code>git mv</code> the file to <code>done/</code> yourself, since only files in <code>ready/</code> move there on their own. Not yet: write what to change, and the next pass fixes it on the same branch.</p>
+          <p>With a review job (section 5), it reviews first and only clean builds reach <code>ready/</code>; you can still add notes of your own. Without one, read the branch. Good: merge it, and <code>git mv</code> the file to <code>done/</code> yourself, since only files in <code>ready/</code> move there on their own. Not yet: write what to change, and the next pass fixes it on the same branch.</p>
           <div class="box"><pre><span class="p">$ </span>git fetch && git diff master...origin/factory/FT16-search-box
 <span class="p">$ </span>$EDITOR .factory/review/FT16-search-box.md
 <span class="add">  ## alex · 2026-11-04 14:00
@@ -446,24 +448,62 @@ FT12-export-csv.md</span></pre></div>
     </div>
   </section>
 
+  <section aria-labelledby="gate-h">
+    <span class="kicker">5 · Optional review job</span>
+    <h2 id="gate-h">Review before ready/</h2>
+    <p>With <code>review = true</code> in <code>factory.toml</code>, a second scheduled job reviews every build, and the factory waits for it. An item reaches <code>ready/</code> only when its latest commit has a review without P0 or P1 findings and the tests pass merged with <code>master</code>. Sample prompts for the job are in <code>review-cron.md</code> (in a clone) and <code>review-cron.gh.md</code> (through <code>gh</code>).</p>
+    <div class="split">
+      <div class="box">
+        <div class="vhead">.factory/review/FT16-search-box.md</div>
+<pre><span class="f">## factory · 2026-11-04 10:30
+Built on factory/FT16-search-box. Tests pass.</span>
+
+<span class="y">## reviewer · review · 2026-11-04 11:00
+head: 3f2a1c9e…
+verdict: fix
+fix:
+- [P1] src/toolbar.go:58: Esc clears the list,
+  not the search text.
+notes:
+- [P3] src/toolbar.go:30: the filter runs twice
+  per key.</span>
+
+<span class="f">## factory · 2026-11-04 11:30
+Round 1: Esc clears the text (toolbar.go:58).</span>
+
+<span class="y">## reviewer · review · 2026-11-04 12:00
+head: 8b07d24a…
+verdict: pass</span></pre>
+      </div>
+      <ul class="notes">
+        <li><b>head</b><span>The commit the review is about. It counts only while that is still the branch's latest commit; a fix round or a merge of <code>master</code> needs a new review.</span></li>
+        <li><b>verdict: pass</b><span>No P0 or P1. The next pass tests the merge and moves the item to <code>ready/</code>.</span></li>
+        <li><b>verdict: fix</b><span>The next pass makes a fix round from the <code>fix:</code> list only; <code>notes:</code> are for you. Review rounds count toward <code>max_rounds</code>.</span></li>
+        <li><b>Waiting</b><span>Until its latest commit is reviewed, an item stays in <code>review/</code> and passes leave it alone.</span></li>
+        <li><b>Setup</b><span>Put the job's git name in <code>owners</code>. Your own notes still work as before, and a review never answers a question meant for you.</span></li>
+      </ul>
+    </div>
+  </section>
+
   <section aria-labelledby="rules-h">
-    <span class="kicker">5 · Who touches what</span>
+    <span class="kicker">6 · Who touches what</span>
     <h2 id="rules-h">Every path, human or agent</h2>
     <div class="tablewrap">
       <table>
         <thead><tr><th>Path</th><th>Who</th><th>What they do there</th></tr></thead>
         <tbody>
           <tr><td class="path">src/ … on master</td><td><span class="chip h">human</span></td><td>Changes only by your merges. The agent never commits code to <code>master</code>.</td></tr>
-          <tr><td class="path">factory/&lt;n&gt;-… branches</td><td><span class="chip a">agent</span></td><td>Claude Code writes the code and fix rounds; the agent pushes, and merges <code>master</code> in when needed. You read them and merge them.</td></tr>
+          <tr><td class="path">factory/&lt;ID&gt;-… branches</td><td><span class="chip a">agent</span></td><td>Claude Code writes the code and fix rounds; the agent pushes, and merges <code>master</code> in when needed. You read them and merge them.</td></tr>
           <tr><td class="path">.factory/factory.toml</td><td><span class="chip h">human</span></td><td>You set the test command, what to read first, the paths the agent must not touch.</td></tr>
           <tr><td class="path">.factory/new/</td><td><span class="chip h">human</span></td><td>You create files here. The agent asks its questions in them and moves them on once built; you answer in the file.</td></tr>
-          <tr><td class="path">.factory/review/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The agent puts a built item here; you read the branch and write review notes in the file.</td></tr>
+          <tr><td class="path">.factory/review/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The agent puts a built item here; you, or the review job, read the branch and write review notes in the file.</td></tr>
           <tr><td class="path">.factory/ready/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The agent puts a finished item here; you merge its branch.</td></tr>
           <tr><td class="path">.factory/done/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The agent moves a file here from <code>ready/</code> once its branch is merged, and never reads it again. You move the rest: items merged from <code>review/</code>, or by squash or rebase.</td></tr>
           <tr><td class="path">.factory/stop/</td><td><span class="chip h">human</span></td><td>You park a file here, or move it back to <code>new/</code>. The agent ignores this folder.</td></tr>
           <tr><td class="path">header (--- … ---)</td><td><span class="chip a">agent</span></td><td>The branch name and the fix round count.</td></tr>
           <tr><td class="path">## factory · …</td><td><span class="chip a">agent</span></td><td>Questions, the plan, what each build and fix round did.</td></tr>
           <tr><td class="path">## yourname · …</td><td><span class="chip h">human</span></td><td>The request, answers, review notes. Always added at the end; nobody edits an earlier section.</td></tr>
+          <tr><td class="path">## reviewer · review · …</td><td><span class="chip a">agent</span></td><td>The review job, signed with a name in <code>owners</code>: the commit it reviewed, the verdict, P0/P1 findings to fix and other notes.</td></tr>
         </tbody>
       </table>
     </div>

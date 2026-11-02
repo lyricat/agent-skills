@@ -32,6 +32,11 @@ rules = [
 # messages, so they are not mistaken for issue or PR numbers. Default: FT.
 prefix = "FT"
 
+# true when a review job (references/review-cron.md) reviews each build:
+# an item in review/ then waits for a review of its latest commit, and
+# reaches ready/ only when that review has no P0 or P1 finding.
+review = false
+
 # Fix rounds on one item before the factory stops and asks you.
 max_rounds = 3
 

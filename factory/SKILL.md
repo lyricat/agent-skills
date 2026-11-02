@@ -5,7 +5,7 @@ description: "Run one pass of a software factory whose features and issues are p
 
 # Factory
 
-One run of this skill is one pass over a repository's `.factory/` board. A pass is short: it handles what changed since the last pass and stops. Git works as usual for code, branches and merges; only the tracking is plain files. `references/workflow-guide.html` shows the whole workflow for people.
+One run of this skill is one pass over a repository's `.factory/` board. A pass is short: it handles what changed since the last pass and stops. Git works as usual for code, branches and merges; only the tracking is plain files. `references/workflow-guide.html` shows the whole workflow for people. `references/review-cron.md` and `references/review-cron.gh.md` are sample prompts for a separate review job (see Reviews).
 
 ## Inputs
 
@@ -48,6 +48,7 @@ A question never moves an item: it stays in its folder and **waits** (see An ite
 - `rules`: extra rules for the coding agent.
 - `max_rounds`: fix rounds before giving up (default 3).
 - `notify`: a command with `{title}` and `{text}`, run when an item reaches `ready/`.
+- `review`: `true` when a review job reviews each build; a `review/` item then reaches `ready/` only after a passing review (default `false`; see Reviews).
 - `prefix`: capital letters put before item numbers (default `FT`).
 - `timezone`: the clock for section times and the board page, such as `Asia/Tokyo` (default: the machine's).
 
@@ -78,9 +79,29 @@ Filter the list as I type; Esc clears it.
 - The thread is sections headed `## <name> · <YYYY-MM-DD HH:MM>`. Append sections at the end; never edit or remove an earlier one, nor anything outside the header.
 - The factory signs its sections `factory`, its plan `## factory · plan · <time>`, and anything that needs the owner before it can go on (questions, a build that keeps failing, too many rounds) `## factory · question · <time>`. Section times use `timezone`.
 
-A **new owner message** is a section by one of `owners` after the last `factory` section, or, in a file without any, the owner's first section.
+A **new owner message** is a section by one of `owners`, other than a review, after the last `factory` section, or, in a file without any, the owner's first section.
 
 An item **waits** when its last `factory` section is a question and there is no new owner message. A pass skips a waiting item and writes nothing to it.
+
+### Reviews
+
+With `review = true`, a review job (see `references/review-cron.md`) reviews each build and appends a **review** section, signed by a name in `owners`:
+
+```markdown
+## reviewer · review · 2026-11-05 10:00
+head: 3f2a1c9e0b4d…
+verdict: fix
+fix:
+- [P1] src/sync.go:88: the token is logged in plain text; drop it from the log line.
+notes:
+- [P3] src/sync.go:120: the retry delay never grows.
+```
+
+- `head` is the commit reviewed. A review counts only while `head` is the branch's current head; any new commit (a fix round, merging `base`) needs a new review.
+- `verdict: fix` means P0 or P1 findings, listed under `fix:`. `notes:` are information only.
+- A review is never a new owner message: it does not wake a waiting item. A **new review** is one after the last `factory` section.
+
+Without `review = true`, review sections are information only.
 
 ## Untrusted text
 
@@ -108,7 +129,7 @@ Every board change is a commit on `base` in `repo` that touches only `.factory/`
 ## Per folder
 
 - `new/`: analyse.
-- `review/`: it **needs work** when there is a new owner message or the branch does not merge cleanly with `base`; then fix. Otherwise test the merge result, as below: a pass moves it to `ready/` and runs `notify`; a failure is a fix round with the failure as its request.
+- `review/`: it **needs work** when there is a new owner message, a new review of the current head with `verdict: fix` (when `review = true`), or the branch does not merge cleanly with `base`; then fix. Otherwise, when `review = true`, the latest review of the current head must say `verdict: pass`; if there is none, skip it and write nothing: the review job has not seen this head yet. Otherwise test the merge result, as below: a pass moves it to `ready/` and runs `notify`; a failure is a fix round with the failure as its request.
 - `ready/`: first check whether the owner merged it: `git merge-base --is-ancestor <tip> <remote>/<base>`, where `<tip>` is `<remote>/<branch>`, or the local branch when the remote one was deleted. If merged, move it to `done/` with a section saying so, remove its worktrees (`git worktree remove`), and keep the branch. A squash or rebase merge is not detected; the owner moves those items. Otherwise skip, unless there is a new owner message or the branch no longer merges cleanly; then move it to `review/` and fix. When `base` has new commits outside `.factory/` since the item reached `ready/`, test the merge result again; a failure moves it to `review/` with the failure as its request.
 
 ### Test the merge result
@@ -149,7 +170,7 @@ The item stays in `new/` while it is built; the board changes only when the buil
 2. `round` is the header's plus one. Above `max_rounds`, append a question listing what is left; the item waits in its folder.
 3. If a note is unclear, or two owners disagree, ask as in Analyse instead of guessing.
 4. If the branch conflicts with `base`, merge `<remote>/<base>` into it; never rebase it.
-5. Run the coding agent as in Build, with a task that quotes each owner note exactly (`file:line: what`), or the test failure, or the conflict.
+5. Run the coding agent as in Build, with a task that quotes each owner note exactly (`file:line: what`), or each line of a review's `fix:` list (not its `notes:`), or the test failure, or the conflict.
 6. Verify as in Build step 5, push the same branch, set `round`, and append a section answering each note by its point. The item stays in `review/`.
 
 ## Never
