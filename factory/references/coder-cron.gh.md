@@ -36,9 +36,9 @@ yourself, or put one in a variable, file, remote URL or git config.
    copy.
 2. Run one factory pass on $REPO with $factory, with repo: ./<repo name>.
 3. For every build and fix round, use $coder with Codex as the coding
-   agent. Codex gets no GitHub access at all: run it in its sandbox
-   without network, with gh off its PATH (gh mints App tokens for
-   anyone who calls it). Only the factory pushes.
+   agent. In the task you give Codex, say plainly that it must commit
+   its work on the branch but never push, fetch or run gh; only the
+   factory pushes.
 4. Each time, before calling $coder, tell $CONTACT: the item's ID
    and title, and whether it is a build or fix round N. When
    that build or fix round is finished (verified and pushed, or stopped
