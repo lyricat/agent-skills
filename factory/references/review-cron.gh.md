@@ -32,13 +32,16 @@ The job reads and writes the board with the GitHub API. Its token needs Contents
 
 ```
 REPO=OWNER/REPO
-CONTACT=<who to tell, and how>
+CONTACT=<who to tell, and how: tg:@name, slack:#channel, or anything else>
 
 Review the factory items in review/ of $REPO, using gh only (no local
 clone of the project). Review only: never edit code, merge, push branches,
 or move item files.
 
 Use $review-code, run through $coder with Codex.
+
+Anything that talks to GitHub goes through gh (gh api, gh repo clone,
+gh auth status), never plain git or curl against github.com.
 
 Let R=repos/$REPO. Read .factory/factory.toml for base and timezone:
   gh api "$R/contents/.factory/factory.toml" --jq .content | base64 -d
@@ -78,7 +81,9 @@ Let R=repos/$REPO. Read .factory/factory.toml for base and timezone:
    your section to the new text, and retry, at most three times; then
    stop and say so. A 404 means the item left review/: skip it.
 6. If any verdict is fix, tell $CONTACT: each item's ID, title and its
-   P0/P1 findings, one line each.
+   P0/P1 findings.
+7. Format every message to $CONTACT as the factory's references/messages.md
+   says for that destination (Telegram, Slack, or plain text).
 ```
 
 The blob `sha` does the job of `git pull --rebase`: if the factory changed the file in between, the write is refused instead of overwriting it.

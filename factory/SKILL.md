@@ -21,7 +21,8 @@ Stop and say so when `repo` is not a git repository, has no `.factory/factory.to
 The runner provides GitHub credentials through git's credential helper and `gh`; they may be short-lived and refreshed by the runner. `references/github-app.md` lists the GitHub App permissions and branch rules they need.
 
 - Never read, print, store or commit a token, and never set up credentials yourself.
-- Run the coding agent and `test` without the factory's credentials: unset `GH_TOKEN` and `GITHUB_TOKEN`, set `GH_CONFIG_DIR` to an empty directory so `gh` has no stored login, and clear git's credential helper with `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=credential.helper GIT_CONFIG_VALUE_0=`. Only the factory pushes.
+- When the task says git has no credential helper and `gh` gives credentials, run each fetch, pull and push with `gh` as the helper for that command only, so the token goes from `gh` straight to git: `GH_REPO=<OWNER/REPO> git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push …`. Never put a token in a variable, a file, a remote URL or the git config.
+- Run the coding agent and `test` without the factory's credentials: unset `GH_TOKEN` and `GITHUB_TOKEN`, set `GH_CONFIG_DIR` to an empty directory so `gh` has no stored login, clear git's credential helper with `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=credential.helper GIT_CONFIG_VALUE_0=`, and leave `gh` off their `PATH`: a `gh` that mints tokens itself, such as a GitHub App wrapper, ignores all of the above. Run the coding agent in its own sandbox without network when it has one. Only the factory pushes.
 - A fetch or push refused for authentication or permission is not a conflict: retry once, then end the pass and say what was refused.
 
 ## The board
@@ -48,6 +49,8 @@ A question never moves an item: it stays in its folder and **waits** (see An ite
 - `rules`: extra rules for the coding agent.
 - `max_rounds`: fix rounds before giving up (default 3).
 - `notify`: a command with `{title}` and `{text}`, run when an item reaches `ready/`.
+
+Every notice to a person (`notify`, or a contact named by the task) follows `references/messages.md`: Telegram MarkdownV2 for Telegram, Slack mrkdwn for Slack, plain text otherwise.
 - `review`: `true` when a review job reviews each build; a `review/` item then reaches `ready/` only after a passing review (default `false`; see Reviews).
 - `prefix`: capital letters put before item numbers (default `FT`).
 - `timezone`: the clock for section times and the board page, such as `Asia/Tokyo` (default: the machine's).
@@ -77,10 +80,10 @@ Filter the list as I type; Esc clears it.
 - The header between `---` lines is the factory's: `branch` and `round`. A new file has none; the factory adds it when the build is pushed.
 - The first `# ` line is the title.
 - The thread is sections headed `## <name> · <YYYY-MM-DD HH:MM>`. Append sections at the end; never edit or remove an earlier one, nor anything outside the header.
+- Only a line of that form starts a section. Every other line, Markdown headings of any level included (`## Acceptance criteria`, `### Notes`), belongs to the section above it. The one exception is a `## ` line that starts with `factory` or a name in `owners` but is not of that form: it is a mistyped signature, and the file does not parse, so that an owner's answer is never hidden inside the section above.
 - The factory signs its sections `factory`, its plan `## factory · plan · <time>`, and anything that needs the owner before it can go on (questions, a build that keeps failing, too many rounds) `## factory · question · <time>`. Section times use `timezone`.
 
 A **new owner message** is a section by one of `owners`, other than a review, after the last `factory` section, or, in a file without any, the owner's first section.
-- Only a line of that form starts a section. Every other line, Markdown headings of any level included (`## Acceptance criteria`, `### Notes`), belongs to the section above it. The one exception is a `## ` line that starts with `factory` or a name in `owners` but is not of that form: it is a mistyped signature, and the file does not parse, so that an owner's answer is never hidden inside the section above.
 
 An item **waits** when its last `factory` section is a question and there is no new owner message. A pass skips a waiting item and writes nothing to it.
 

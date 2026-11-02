@@ -32,7 +32,7 @@ The job runs in its own clone, never in someone's working copy.
 
 ```
 REPO=OWNER/REPO
-CONTACT=<who to tell, and how>
+CONTACT=<who to tell, and how: tg:@name, slack:#channel, or anything else>
 
 Review the factory items in review/ of $REPO (this git repository is a
 clone of it). Review only: never edit code, merge,
@@ -67,7 +67,9 @@ Use $review-code, run through $coder with Codex.
    git pull --rebase, push to base. Never commit anything outside
    .factory/. If the push is refused three times, stop and say so.
 6. If any verdict is fix, tell $CONTACT: each item's ID, title and its
-   P0/P1 findings, one line each.
+   P0/P1 findings.
+7. Format every message to $CONTACT as the factory's references/messages.md
+   says for that destination (Telegram, Slack, or plain text).
 ```
 
 To run it without a clone, through the GitHub API, see `review-cron.gh.md`.
