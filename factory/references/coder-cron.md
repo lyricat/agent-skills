@@ -19,27 +19,25 @@ Fill in the two lines at the top of the prompt.
 REPO=OWNER/REPO
 CONTACT=<who to tell, and how: tg:@name, slack:#channel, or anything else>
 
-Run one factory pass on $REPO with $factory, in this repository (a clone
-used only by the factory).
-
-For every build and fix round, use $coder with Codex as the coding agent.
-In the task you give Codex, say plainly that it must commit its work on
-the branch but never push, fetch or run gh; only the factory pushes.
-Follow the factory's rules: build at most one new item per pass; when a
-request is unclear, ask in the item instead of guessing.
-
-Each time, before calling $coder, tell $CONTACT: the item's ID and
-title, and whether it is a build or fix round N. When that build
-or fix round is finished (verified and pushed, or stopped with a
-question), tell $CONTACT again: the item's ID, the outcome
-(pushed, tests passing; or waiting on a question) and where the item is
-now. If a message cannot be sent, note it for the summary and go on.
-
-At the end, if an item reached ready/ or is waiting on a question,
-tell $CONTACT: each item's ID, title and what it needs.
-
-Format every message to $CONTACT as the factory's references/messages.md
-says for that destination (Telegram, Slack, or plain text).
+1. Run one factory pass on $REPO with $factory, in this repository (a
+   clone used only by the factory).
+2. For every build and fix round, use $coder with Codex as the coding
+   agent. In the task you give Codex, say plainly that it must commit
+   its work on the branch but never push, fetch or run gh; only the
+   factory pushes.
+3. Each time, before calling $coder, tell $CONTACT: the item's ID and
+   title, and whether it is a build or fix round N. When that build or
+   fix round is finished (verified and pushed, or stopped with a
+   question), tell $CONTACT again: the item's ID, the outcome (pushed,
+   tests passing; or waiting on a question) and where the item is now.
+   If a message cannot be sent, note it for the summary and go on.
+4. Follow the factory's rules: build at most one new item per pass; when
+   a request is unclear, ask in the item instead of guessing; Codex gets
+   no push or GitHub credentials.
+5. At the end, if an item reached ready/ or is waiting on a question,
+   tell $CONTACT: each item's ID, title and what it needs.
+6. Format every message to $CONTACT as the factory's references/messages.md
+   says for that destination (Telegram, Slack, or plain text).
 ```
 
 To run it without a clone kept by the scheduler, through `gh`, see `coder-cron.gh.md`.
