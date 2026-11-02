@@ -35,8 +35,13 @@ def git(repo, *args):
     return r.stdout if r.returncode == 0 else ""
 
 
-def parse(text):
-    """The header, title and sections of an item file, and what is wrong with it."""
+def parse(text, signers=()):
+    """The header, title and sections of an item file, and what is wrong with it.
+
+    Only `## name · time` starts a section; other headings are body text. A
+    `## ` line starting with a signer's name (factory, an owner) that is not
+    a valid heading is a mistyped signature, reported as a problem.
+    """
     lines = text.splitlines()
     header, problems, i = {}, [], 0
     if lines and lines[0].strip() == "---":
@@ -60,13 +65,15 @@ def parse(text):
         problems.append("no # title line")
     sections, current = [], None
     for line in lines[i:]:
-        if line.startswith("## "):
-            m = SECTION.match(line)
-            if not m:
-                problems.append("a section heading not in the form ## name · YYYY-MM-DD HH:MM")
-                current = {"who": line[3:].strip(), "kind": "", "time": "", "body": []}
-            else:
-                current = {"who": m.group(1), "kind": m.group(2) or "", "time": m.group(3), "body": []}
+        m = SECTION.match(line) if line.startswith("## ") else None
+        if m:
+            current = {"who": m.group(1), "kind": m.group(2) or "", "time": m.group(3), "body": []}
+            sections.append(current)
+        elif line.startswith("## ") and line[3:].split(" ", 1)[0].strip("·:,") in signers:
+            # A signer's name but not a valid heading: a typo, which would
+            # otherwise hide their answer inside the section above.
+            problems.append("a section heading not in the form ## name · YYYY-MM-DD HH:MM")
+            current = {"who": line[3:].strip(), "kind": "", "time": "", "body": []}
             sections.append(current)
         elif current is not None:
             current["body"].append(line)
@@ -169,7 +176,7 @@ def load(repo):
             label = name.split("-", 1)[0] if m.group(1) else (f"{prefix}{n}" if n else "new")
             path = os.path.join(".factory", folder, name)
             with open(os.path.join(repo, path), encoding="utf-8", errors="replace") as f:
-                header, title, sections, problems = parse(f.read())
+                header, title, sections, problems = parse(f.read(), owners | {"factory"})
             steps = moves(repo, path)
             items.append({
                 "n": n, "slug": m.group(3), "folder": folder,

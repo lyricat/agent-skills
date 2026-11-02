@@ -80,6 +80,7 @@ Filter the list as I type; Esc clears it.
 - The factory signs its sections `factory`, its plan `## factory · plan · <time>`, and anything that needs the owner before it can go on (questions, a build that keeps failing, too many rounds) `## factory · question · <time>`. Section times use `timezone`.
 
 A **new owner message** is a section by one of `owners`, other than a review, after the last `factory` section, or, in a file without any, the owner's first section.
+- Only a line of that form starts a section. Every other line, Markdown headings of any level included (`## Acceptance criteria`, `### Notes`), belongs to the section above it. The one exception is a `## ` line that starts with `factory` or a name in `owners` but is not of that form: it is a mistyped signature, and the file does not parse, so that an owner's answer is never hidden inside the section above.
 
 An item **waits** when its last `factory` section is a question and there is no new owner message. A pass skips a waiting item and writes nothing to it.
 
