@@ -180,7 +180,7 @@ The item stays in `new/` while it is built; the board changes only when the buil
 2. `round` is the header's plus one. Above `max_rounds`, append a question listing what is left; the item waits in its folder.
 3. If a note is unclear, or two owners disagree, ask as in Analyse instead of guessing.
 4. If the branch conflicts with `base`, merge `<remote>/<base>` into it; never rebase it.
-5. Run the coding agent as in Build, with a task that quotes each owner note exactly (`file:line: what`), or each line of a review's `fix:` list (not its `notes:`), or the test failure, or the conflict.
+5. Run the coding agent as in Build, with a task that holds the item's title, thread and plan for context, and, as the work to do, quotes each owner note exactly (`file:line: what`), or each line of a review's `fix:` list (not its `notes:`), or the test failure, or the conflict.
 6. Verify as in Build step 5, push the same branch, set `round`, and append a section answering each note by its point. The item stays in `review/`.
 
 ## Never
