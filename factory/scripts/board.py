@@ -21,8 +21,10 @@ import tomllib
 from zoneinfo import ZoneInfo
 
 FOLDERS = ["new", "review", "ready", "done"]  # stop/ is parked: not shown
-# Owners add new/<slug>.md; the factory numbers it.
-ITEM = re.compile(r"^(?:(\d{4})-)?([a-z0-9]+(?:-[a-z0-9]+)*)\.md$")
+# <PREFIX><N>-<slug>.md, or <NNNN>-<slug>.md from before prefixes. Owners add
+# new/<slug>.md; the factory numbers it. Prefixes are capitals and slugs are
+# lower case, so a slug can't be read as a number.
+ITEM = re.compile(r"^(?:(?:[A-Z]+(\d+)|(\d{4}))-)?([a-z0-9]+(?:-[a-z0-9]+)*)\.md$")
 SECTION = re.compile(r"^## (.+?) · (?:(plan|question) · )?(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\s*$")
 DONE_SHOWN = 12
 TZ = None  # factory.toml's timezone; the machine's own when unset
@@ -148,6 +150,9 @@ def load(repo):
     if cfg.get("timezone"):
         TZ = ZoneInfo(cfg["timezone"])
     owners = set(cfg.get("owners", []))
+    prefix = cfg.get("prefix", "FT")
+    if not re.fullmatch(r"[A-Z]+", prefix):
+        sys.exit(f"board.py: prefix must be capital letters, not {prefix!r}")
     base, remote = cfg.get("base", "master"), cfg.get("remote", "origin")
     items = []
     for folder in FOLDERS:
@@ -156,17 +161,20 @@ def load(repo):
             continue
         for name in sorted(os.listdir(d)):
             m = ITEM.match(name)
-            if not m or (m.group(1) is None and folder != "new"):
+            num = m and (m.group(1) or m.group(2))
+            if not m or (num is None and folder != "new"):
                 continue
-            n = int(m.group(1)) if m.group(1) else None
+            n = int(num) if num else None
+            # A file names its own prefix; older four-digit files take today's.
+            label = name.split("-", 1)[0] if m.group(1) else (f"{prefix}{n}" if n else "new")
             path = os.path.join(".factory", folder, name)
             with open(os.path.join(repo, path), encoding="utf-8", errors="replace") as f:
                 header, title, sections, problems = parse(f.read())
             steps = moves(repo, path)
             items.append({
-                "n": n, "slug": m.group(2), "folder": folder,
-                "id": str(n) if n else m.group(2), "label": f"#{n}" if n else "new",
-                "title": title or m.group(2).replace("-", " "),
+                "n": n, "slug": m.group(3), "folder": folder,
+                "id": str(n) if n else m.group(3), "label": label,
+                "title": title or m.group(3).replace("-", " "),
                 "branch": header.get("branch", ""), "round": header.get("round", ""),
                 "sections": sections, "problems": problems, "steps": steps,
                 "changed": steps[-1][1] if steps else 0,

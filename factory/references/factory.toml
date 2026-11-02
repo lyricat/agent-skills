@@ -28,6 +28,10 @@ rules = [
   "Scripted tests get a throwaway HOME.",
 ]
 
+# Capital letters before item numbers: FT16 in file names, branches and
+# messages, so they are not mistaken for issue or PR numbers. Default: FT.
+prefix = "FT"
+
 # Fix rounds on one item before the factory stops and asks you.
 max_rounds = 3
 

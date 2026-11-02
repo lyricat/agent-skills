@@ -48,17 +48,20 @@ A question never moves an item: it stays in its folder and **waits** (see An ite
 - `rules`: extra rules for the coding agent.
 - `max_rounds`: fix rounds before giving up (default 3).
 - `notify`: a command with `{title}` and `{text}`, run when an item reaches `ready/`.
+- `prefix`: capital letters put before item numbers (default `FT`).
 - `timezone`: the clock for section times and the board page, such as `Asia/Tokyo` (default: the machine's).
 
 ### An item file
 
-`<folder>/<NNNN>-<slug>.md`. `NNNN` is the item number, four digits; the slug is a few lower-case words joined by hyphens. Its branch is `factory/<N>-<slug>`, the number without leading zeros. Once numbered, neither ever changes.
+`<folder>/<ID>-<slug>.md`. The **ID** is `prefix` and the item number with no leading zeros, such as `FT16`; it names the item everywhere: files, branches, sections, commits and the board. The slug is a few lower-case words joined by hyphens. A new branch is `factory/<ID>-<slug>`; once the header has a `branch`, always use that one. Once numbered, neither ever changes.
+
+The number is what identifies an item; the prefix only marks it. Files from before prefixes, `<NNNN>-<slug>.md` with four digits, are item `NNNN` and keep their names and branches. If the owner changes `prefix`, old items keep theirs and new numbers still go above every number in use.
 
 Owners add `new/<slug>.md` without a number, so two people adding items at once cannot pick the same one. The factory numbers items (Each pass, step 3).
 
 ```markdown
 ---
-branch: factory/16-search-box
+branch: factory/FT16-search-box
 round: 1
 ---
 # Search box in the toolbar
@@ -89,7 +92,7 @@ Every board change is a commit on `base` in `repo` that touches only `.factory/`
 
 1. `git pull --rebase <remote> <base>`, then re-read the item; it may have moved or grown.
 2. Change it: `git mv` between folders, set the header, append a section.
-3. Stage with `git add -A .factory/` (a `git mv` stages the move, not edits made to the file before it), then commit with `factory: <N> <from> → <to>` or `factory: <N> <what>`. `git show --stat HEAD` must show the edits as well as the move.
+3. Stage with `git add -A .factory/` (a `git mv` stages the move, not edits made to the file before it), then commit with `factory: <ID> <from> → <to>` or `factory: <ID> <what>`. `git show --stat HEAD` must show the edits as well as the move.
 4. Check `git diff --name-only <remote>/<base>..HEAD`: every path must be under `.factory/`. If not, reset to `<remote>/<base>` and end the pass.
 5. `git push <remote> <base>`. If refused, go back to 1, at most three times; then leave the item for the next pass. Never force-push.
 
@@ -97,8 +100,8 @@ Every board change is a commit on `base` in `repo` that touches only `.factory/`
 
 1. **Lock.** `mkdir "${XDG_RUNTIME_DIR:-/tmp}/factory-<repo dir name>.lock"`. If it exists and is younger than three hours, another pass runs: stop. If older, take it over. Remove it when the pass ends, also on failure.
 2. **Update.** `git -C "$repo" fetch <remote> --prune`, and fast-forward `base`.
-3. **Number** the files in `new/` named `<slug>.md`, and any file in `new/` whose number another item in any folder already has (keep the number on the older one). Take the next numbers above the highest in every folder, `done/` and `stop/` included, oldest file first. Rename them with `git mv` in one board commit, `factory: number <N> <slug>, …`, and push it before anything else; when the push is refused, number again from the pulled board. Only `new/` items are renumbered: they have no branch yet.
-4. **Collect** the item files in `new/`, `review/` and `ready/`: the `*.md` files whose names are `<NNNN>-<slug>.md`. Ignore every other file, such as the `.gitkeep` placeholders that keep empty folders in git. An item file that does not parse (header, title or section headings) gets a question section saying what is wrong; never rewrite the owner's text to fix it.
+3. **Number** the files in `new/` named `<slug>.md`, and any file in `new/` whose number another item in any folder already has (keep the number on the older one). Take the next numbers above the highest in every folder, `done/` and `stop/` included, oldest file first. Rename them with `git mv` in one board commit, `factory: number <ID> <slug>, …`, and push it before anything else; when the push is refused, number again from the pulled board. Only `new/` items are renumbered: they have no branch yet.
+4. **Collect** the item files in `new/`, `review/` and `ready/`: the `*.md` files whose names are `<ID>-<slug>.md` (or the older `<NNNN>-<slug>.md`). Ignore every other file, such as the `.gitkeep` placeholders that keep empty folders in git. An item file that does not parse (header, title or section headings) gets a question section saying what is wrong; never rewrite the owner's text to fix it.
 5. **Handle** them oldest first by last change (`git log -1 --format=%ct -- <file>`), skipping items that wait. Start at most one build per pass; fix rounds are not limited.
 6. **End.** Release the lock and end with a short summary: each item touched, its move, and what the owner should look at.
 
@@ -106,16 +109,16 @@ Every board change is a commit on `base` in `repo` that touches only `.factory/`
 
 - `new/`: analyse.
 - `review/`: it **needs work** when there is a new owner message or the branch does not merge cleanly with `base`; then fix. Otherwise test the merge result, as below: a pass moves it to `ready/` and runs `notify`; a failure is a fix round with the failure as its request.
-- `ready/`: first check whether the owner merged it: `git merge-base --is-ancestor <tip> <remote>/<base>`, where `<tip>` is `<remote>/factory/<N>-<slug>`, or the local branch when the remote one was deleted. If merged, move it to `done/` with a section saying so, remove its worktrees (`git worktree remove`), and keep the branch. A squash or rebase merge is not detected; the owner moves those items. Otherwise skip, unless there is a new owner message or the branch no longer merges cleanly; then move it to `review/` and fix. When `base` has new commits outside `.factory/` since the item reached `ready/`, test the merge result again; a failure moves it to `review/` with the failure as its request.
+- `ready/`: first check whether the owner merged it: `git merge-base --is-ancestor <tip> <remote>/<base>`, where `<tip>` is `<remote>/<branch>`, or the local branch when the remote one was deleted. If merged, move it to `done/` with a section saying so, remove its worktrees (`git worktree remove`), and keep the branch. A squash or rebase merge is not detected; the owner moves those items. Otherwise skip, unless there is a new owner message or the branch no longer merges cleanly; then move it to `review/` and fix. When `base` has new commits outside `.factory/` since the item reached `ready/`, test the merge result again; a failure moves it to `review/` with the failure as its request.
 
 ### Test the merge result
 
 An item is ready only when the code the owner would get passes, not the branch alone: changes on `base` can break the branch without any conflict. Test the merge without committing it to the branch:
 
-1. `git -C "$repo" worktree add --detach "$worktrees/test-<N>" factory/<N>-<slug>`.
+1. `git -C "$repo" worktree add --detach "$worktrees/test-<ID>" <branch>`.
 2. In it, `git merge --no-edit <remote>/<base>`. A conflict means the branch needs work.
 3. Run `test` there (and `after_change` first when the repository needs it).
-4. `git -C "$repo" worktree remove --force "$worktrees/test-<N>"`, whatever the result.
+4. `git -C "$repo" worktree remove --force "$worktrees/test-<ID>"`, whatever the result.
 
 ### Analyse
 
@@ -129,7 +132,7 @@ If it is clear, build it.
 
 The item stays in `new/` while it is built; the board changes only when the build is pushed (step 6) or needs a question.
 
-1. Branch and worktree from `<remote>/<base>`: `git -C "$repo" worktree add --no-track -b factory/<N>-<slug> "$worktrees/factory-<N>-<slug>" <remote>/<base>` (`--no-track`: the branch must not follow `base`). If the branch exists, locally or on the remote, reuse it and its worktree. When it already has commits beyond `<remote>/<base>`, an earlier pass died during the build: go on from step 5 with a plan for what is there.
+1. Branch and worktree from `<remote>/<base>`: `git -C "$repo" worktree add --no-track -b factory/<ID>-<slug> "$worktrees/factory-<ID>-<slug>" <remote>/<base>` (`--no-track`: the branch must not follow `base`). If the branch exists, locally or on the remote, reuse it and its worktree. When it already has commits beyond `<remote>/<base>`, an earlier pass died during the build: go on from step 5 with a plan for what is there.
 2. Write the plan; it goes into the item with the build's report. Write it as: **Behaviour** (step by step, including empty, error and first-run cases), **Scope** (what changes, and what is left out on purpose), **Decisions** (details the request did not settle, and why), **Checking** (tests to add; what to check by hand).
 3. Run a coding agent in the worktree (Claude Code: the runner's `coder` tool when it has one, else `claude -p`) with a task that holds the item's title, thread and plan, and these rules, plus `rules`:
    - Implement the plan. Follow the repository's own instructions (`AGENTS.md`, `CLAUDE.md`) and the `read` files.
@@ -138,11 +141,11 @@ The item stays in `new/` while it is built; the board changes only when the buil
    - End with what changed, the test result, and what could not be checked here.
 4. If it ends with no commits, run it once more with what is missing; then append the plan and a question saying what is missing.
 5. Verify yourself: `git log <remote>/<base>..HEAD` holds only work for this item, no path in `never` changed, and `test` passes. If the tests fail, give the agent the failure once more; if they still fail, append the plan and a question with the failure, and keep the branch.
-6. `git push -u <remote> factory/<N>-<slug>`, so the branch follows its own remote branch. In one board commit, append the plan section, then a section saying what was built, the test result, and what was not checked (always say so when the UI changed and was not looked at); set the header (`branch`, `round: 0`); move the item to `review/`.
+6. `git push -u <remote> factory/<ID>-<slug>`, so the branch follows its own remote branch. In one board commit, append the plan section, then a section saying what was built, the test result, and what was not checked (always say so when the UI changed and was not looked at); set the header (`branch`, `round: 0`); move the item to `review/`.
 
 ### Fix
 
-1. Reuse the worktree, or make it from `<remote>/factory/<N>-<slug>`; then `git pull --ff-only <remote> factory/<N>-<slug>`, naming the branch so a wrong upstream can't pull `base`. Never a new branch.
+1. Reuse the worktree, or make it from `<remote>/<branch>`; then `git pull --ff-only <remote> <branch>`, naming the branch so a wrong upstream can't pull `base`. Never a new branch.
 2. `round` is the header's plus one. Above `max_rounds`, append a question listing what is left; the item waits in its folder.
 3. If a note is unclear, or two owners disagree, ask as in Analyse instead of guessing.
 4. If the branch conflicts with `base`, merge `<remote>/<base>` into it; never rebase it.
@@ -168,7 +171,7 @@ When a step fails and the case is not here, or it comes back on the next pass, a
 | `repo` has uncommitted changes | End the pass; never clean anyone's work. |
 | `worktree add`: already exists or checked out | `git -C "$repo" worktree prune`, then reuse the worktree at that path. |
 | A worktree holds changes from a stopped run | Read `git status` and `git diff`; commit what belongs to the item, else `git stash`. |
-| Push of a `factory/` branch refused (non-fast-forward) | Someone pushed to it: `git pull --no-rebase <remote> factory/<N>-<slug>`, run `test`, push again. |
+| Push of a `factory/` branch refused (non-fast-forward) | Someone pushed to it: `git pull --no-rebase <remote> <branch>`, run `test`, push again. |
 | Board push refused three times | Leave the item for the next pass. |
 | Push refused for authentication or permission | Retry once; then end the pass and name the refused ref, so the owner can check the App's permissions and rules. |
 | The coding agent changed things outside the plan | Revert those commits in the worktree, then go on. |

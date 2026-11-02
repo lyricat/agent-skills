@@ -153,22 +153,22 @@ svg .csub { font-size: 10.5px; fill: var(--muted); }
 └── .factory/
     ├── factory.toml         <span class="c">test command, rules</span>
     ├── <span class="y">new/</span>                 <span class="c">you add here; not built yet</span>
-    │   └── <span class="y">0016-search-box.md</span>
+    │   └── <span class="y">FT16-search-box.md</span>
     ├── review/              <span class="c">built: read it</span>
-    │   └── 0013-sync-icons.md
+    │   └── FT13-sync-icons.md
     ├── ready/               <span class="c">yours to merge</span>
-    │   └── 0012-export-csv.md
+    │   └── FT12-export-csv.md
     ├── done/
     └── <span class="y">stop/</span>                <span class="c">parked</span>
 
 branches:  master
-           <span class="f">factory/12-export-csv</span>
-           <span class="f">factory/13-sync-icons</span></pre>
+           <span class="f">factory/FT12-export-csv</span>
+           <span class="f">factory/FT13-sync-icons</span></pre>
       </div>
       <ul class="notes">
-        <li><b>One file per feature or issue</b><span>Named by a number and a few words. Both are the same kind of file; the factory treats them alike.</span></li>
+        <li><b>One file per feature or issue</b><span>Named by an ID such as <code>FT16</code> and a few words. The <code>FT</code> prefix keeps it apart from issue and PR numbers. Both are the same kind of file; the factory treats them alike.</span></li>
         <li><b>The folder is the progress</b><span><code>ls .factory/*</code> is the whole board. A move between folders is a <code>git mv</code>, so <code>git log</code> shows each item's history.</span></li>
-        <li><b>The code is built on branches</b><span>Each item gets <code>factory/&lt;number&gt;-&lt;words&gt;</code>. You merge it into <code>master</code> the usual way.</span></li>
+        <li><b>The code is built on branches</b><span>Each item gets <code>factory/&lt;ID&gt;-&lt;words&gt;</code>. You merge it into <code>master</code> the usual way.</span></li>
         <li><b><code>factory.toml</code></b><span>What the factory needs to know about this repo: how to test it, what to read first, files it must not touch.</span></li>
       </ul>
     </div>
@@ -176,9 +176,9 @@ branches:  master
     <h3>One item file</h3>
     <div class="split">
       <div class="box">
-        <div class="vhead">.factory/review/0013-sync-icons.md</div>
+        <div class="vhead">.factory/review/FT13-sync-icons.md</div>
 <pre><span class="f">---
-branch: factory/13-sync-icons
+branch: factory/FT13-sync-icons
 round: 1
 ---</span>
 # Icons sync from the server
@@ -200,7 +200,7 @@ Scope: src/icons.go. Not the settings page.
 Checking: a test for the sync; the icons by eye.</span>
 
 <span class="f">## factory · 2026-11-03 12:30
-Built on factory/13-sync-icons. Tests pass.</span>
+Built on factory/FT13-sync-icons. Tests pass.</span>
 
 <span class="y">## alex · 2026-11-03 16:20
 src/icons.go:90: keep the cache between syncs.</span>
@@ -296,36 +296,36 @@ Round 1: the cache stays (icons.go:90).</span></pre>
   <section aria-labelledby="branch-h">
     <span class="kicker">3 · Branches</span>
     <h2 id="branch-h">How branches work</h2>
-    <p>Two kinds of branch. <code>master</code> holds the code you accepted and the board. Each item that gets built has its own branch, <code>factory/&lt;number&gt;-&lt;words&gt;</code>, where only the agent commits.</p>
+    <p>Two kinds of branch. <code>master</code> holds the code you accepted and the board. Each item that gets built has its own branch, <code>factory/&lt;ID&gt;-&lt;words&gt;</code>, where only the agent commits.</p>
     <div class="figure">
-      <svg viewBox="0 0 890 250" role="img" aria-label="Git graph: master and the branch factory/16-search-box, each commit marked human or agent">
+      <svg viewBox="0 0 890 250" role="img" aria-label="Git graph: master and the branch factory/FT16-search-box, each commit marked human or agent">
         <text class="bname" x="20" y="64">master</text>
-        <text class="bname" x="20" y="174">factory/16-</text>
+        <text class="bname" x="20" y="174">factory/FT16-</text>
         <text class="bname" x="20" y="188">search-box</text>
         <path class="line" d="M110 60 L870 60"/>
         <path class="line" d="M300 60 C 330 60, 330 170, 360 170 L 680 170 C 720 170, 730 60, 770 60"/>
         <path class="line" d="M520 60 C 545 60, 545 170, 570 170"/>
         <!-- master -->
         <circle class="cm h" cx="130" cy="60" r="8"/>
-        <text class="clabel" x="130" y="38" text-anchor="middle">new: 16</text>
+        <text class="clabel" x="130" y="38" text-anchor="middle">new: FT16</text>
         <text class="csub" x="130" y="24" text-anchor="middle">board</text>
         <circle class="cm a" cx="215" cy="60" r="8"/>
-        <text class="clabel" x="215" y="38" text-anchor="middle">16 question</text>
+        <text class="clabel" x="215" y="38" text-anchor="middle">FT16 question</text>
         <text class="csub" x="215" y="24" text-anchor="middle">board</text>
         <circle class="cm h" cx="300" cy="60" r="8"/>
-        <text class="clabel" x="300" y="38" text-anchor="middle">answer: 16</text>
+        <text class="clabel" x="300" y="38" text-anchor="middle">answer: FT16</text>
         <text class="csub" x="300" y="24" text-anchor="middle">board</text>
         <circle class="cm a" cx="440" cy="60" r="8"/>
-        <text class="clabel" x="440" y="38" text-anchor="middle">16 → review</text>
+        <text class="clabel" x="440" y="38" text-anchor="middle">FT16 → review</text>
         <text class="csub" x="440" y="24" text-anchor="middle">board</text>
         <circle class="cm h" cx="520" cy="60" r="8"/>
-        <text class="clabel" x="520" y="38" text-anchor="middle">merge 15</text>
+        <text class="clabel" x="520" y="38" text-anchor="middle">merge FT15</text>
         <text class="csub" x="520" y="24" text-anchor="middle">another item</text>
         <circle class="cm h" cx="770" cy="60" r="8"/>
-        <text class="clabel" x="770" y="38" text-anchor="middle">merge 16</text>
+        <text class="clabel" x="770" y="38" text-anchor="middle">merge FT16</text>
         <text class="csub" x="770" y="24" text-anchor="middle">you accept</text>
         <circle class="cm a" cx="845" cy="60" r="8"/>
-        <text class="clabel" x="845" y="38" text-anchor="middle">16 → done</text>
+        <text class="clabel" x="845" y="38" text-anchor="middle">FT16 → done</text>
         <text class="csub" x="845" y="24" text-anchor="middle">board</text>
         <!-- branch -->
         <circle class="cm a" cx="400" cy="170" r="8"/>
@@ -344,7 +344,7 @@ Round 1: the cache stays (icons.go:90).</span></pre>
       <span><i class="sw fac"></i>a commit the agent makes</span>
     </div>
     <ul class="brules">
-      <li><strong>Start.</strong> When an item becomes clear, the agent branches from the newest <code>master</code>. One item, one branch; the number in the file name is the number in the branch name.</li>
+      <li><strong>Start.</strong> When an item becomes clear, the agent branches from the newest <code>master</code>. One item, one branch; the ID in the file name is the ID in the branch name.</li>
       <li><strong>Build and fix.</strong> Claude Code commits the code on that branch, and every fix round adds commits to the same branch. The agent pushes it; it never force-pushes or rewrites it.</li>
       <li><strong>Keeping up.</strong> When <code>master</code> moves on and the branch no longer merges cleanly, the agent merges <code>master</code> into the branch and runs the tests again. It doesn't rebase, so what you already reviewed keeps its commits.</li>
       <li><strong>Board on master.</strong> The agent's commits on <code>master</code> only move files and add sections under <code>.factory/</code>. It never puts code on <code>master</code>.</li>
@@ -365,7 +365,7 @@ Round 1: the cache stays (icons.go:90).</span></pre>
 <span class="p">$ </span>python3 board.py -o board.html     <span class="c"># or: ls .factory/review .factory/ready</span>
 <span class="o">.factory/review:
 .factory/ready:
-0012-export-csv.md</span></pre></div>
+FT12-export-csv.md</span></pre></div>
         </div>
       </li>
       <li>
@@ -373,29 +373,29 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <div class="body">
           <h3>Merge what's ready</h3>
           <p>Read the branch and merge it. The next pass moves the file to <code>done/</code>.</p>
-          <div class="box"><pre><span class="p">$ </span>git diff master...origin/factory/12-export-csv
-<span class="p">$ </span>git merge origin/factory/12-export-csv && git push</pre></div>
+          <div class="box"><pre><span class="p">$ </span>git diff master...origin/factory/FT12-export-csv
+<span class="p">$ </span>git merge origin/factory/FT12-export-csv && git push</pre></div>
         </div>
       </li>
       <li>
         <span class="t you">09:15</span>
         <div class="body">
           <h3>Add a feature or an issue</h3>
-          <p>A new file in <code>new/</code>, named by a few words; the agent gives it the next number, so two people adding at once never clash. Write it as you'd tell a colleague.</p>
+          <p>A new file in <code>new/</code>, named by a few words; the agent gives it the next ID, so two people adding at once never clash. Write it as you'd tell a colleague.</p>
           <div class="box"><pre><span class="p">$ </span>$EDITOR .factory/new/search-box.md
 <span class="add">  # Search box in the toolbar
 
   ## alex · 2026-11-04 09:15
   Filter the list as I type; Esc clears it.</span>
-<span class="p">$ </span>git add .factory && git commit -m "new: 16" && git push</pre></div>
+<span class="p">$ </span>git add .factory && git commit -m "new: search box" && git push</pre></div>
         </div>
       </li>
       <li>
         <span class="t fac">09:30</span>
         <div class="body">
           <h3>A pass runs</h3>
-          <p>It reads #16, finds one unclear point, writes a question section at the end of the file and pushes. The file stays in <code>new/</code> and waits for you.</p>
-          <div class="box"><pre><span class="o">16 search-box   new/   1 question</span></pre></div>
+          <p>It reads FT16, finds one unclear point, writes a question section at the end of the file and pushes. The file stays in <code>new/</code> and waits for you.</p>
+          <div class="box"><pre><span class="o">FT16 search-box   new/   1 question</span></pre></div>
         </div>
       </li>
       <li>
@@ -403,18 +403,18 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <div class="body">
           <h3>Answer the question</h3>
           <p>Add your section at the end and push. Leave the file where it is.</p>
-          <div class="box"><pre><span class="p">$ </span>git pull && $EDITOR .factory/new/0016-search-box.md
+          <div class="box"><pre><span class="p">$ </span>git pull && $EDITOR .factory/new/FT16-search-box.md
 <span class="add">  ## alex · 2026-11-04 10:00
   Yes, case-insensitive.</span>
-<span class="p">$ </span>git commit -am "answer: 16" && git push</pre></div>
+<span class="p">$ </span>git commit -am "answer: FT16" && git push</pre></div>
         </div>
       </li>
       <li>
         <span class="t fac">10:30</span>
         <div class="body">
           <h3>The next pass builds it</h3>
-          <p>A plan section in the item file, the code on <code>factory/16-search-box</code>, tests run, branch pushed, file moved to <code>review/</code>, and a notification for you.</p>
-          <div class="box"><pre><span class="o">16 search-box   new/ → review/   branch factory/16-search-box</span></pre></div>
+          <p>A plan section in the item file, the code on <code>factory/FT16-search-box</code>, tests run, branch pushed, file moved to <code>review/</code>, and a notification for you.</p>
+          <div class="box"><pre><span class="o">FT16 search-box   new/ → review/   branch factory/FT16-search-box</span></pre></div>
         </div>
       </li>
       <li>
@@ -422,11 +422,11 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <div class="body">
           <h3>Review: accept, or ask for a change</h3>
           <p>Read the branch. Good: merge it, and <code>git mv</code> the file to <code>done/</code> yourself, since only files in <code>ready/</code> move there on their own. Not yet: write what to change, and the next pass fixes it on the same branch.</p>
-          <div class="box"><pre><span class="p">$ </span>git fetch && git diff master...origin/factory/16-search-box
-<span class="p">$ </span>$EDITOR .factory/review/0016-search-box.md
+          <div class="box"><pre><span class="p">$ </span>git fetch && git diff master...origin/factory/FT16-search-box
+<span class="p">$ </span>$EDITOR .factory/review/FT16-search-box.md
 <span class="add">  ## alex · 2026-11-04 14:00
   src/toolbar.go:41: keep the text when the list reloads.</span>
-<span class="p">$ </span>git commit -am "review: 16" && git push</pre></div>
+<span class="p">$ </span>git commit -am "review: FT16" && git push</pre></div>
         </div>
       </li>
     </ol>
