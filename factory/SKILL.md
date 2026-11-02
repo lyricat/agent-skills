@@ -14,7 +14,7 @@ The scheduled task may give these; otherwise use the defaults:
 - `repo`: a clone of the project that belongs to the factory, never the owner's working copy, which may hold uncommitted work. Default: the git repository the task runs in.
 - `worktrees`: a directory outside `repo` for build worktrees. Default: `~/.factory/<OWNER>/<REPO>`, from the GitHub remote's `OWNER/REPO` (another host: `~/.factory/<repo directory name>`), created when missing. Review jobs use the same directory.
 
-Stop and say so when `repo` is not a git repository, has no `.factory/factory.toml`, or has uncommitted changes at the start.
+Stop and say so when `repo` is not a git repository or has no `.factory/factory.toml`. Leftovers in `repo` from a stopped pass are cleared at the start of the next (Each pass, step 2).
 
 ## Access
 
@@ -61,7 +61,7 @@ Every notice to a person (`notify`, or a contact named by the task) follows `ref
 
 The number is what identifies an item; the prefix only marks it. Files from before prefixes, `<NNNN>-<slug>.md` with four digits, are item `NNNN` and keep their names and branches. If the owner changes `prefix`, old items keep theirs and new numbers still go above every number in use.
 
-Owners add `new/<slug>.md` without a number, so two people adding items at once cannot pick the same one. The factory numbers items (Each pass, step 3).
+Owners add `new/<slug>.md` without a number, so two people adding items at once cannot pick the same one. The factory numbers items (Each pass, step 4).
 
 ```markdown
 ---
@@ -124,11 +124,17 @@ Every board change is a commit on `base` in `repo` that touches only `.factory/`
 ## Each pass
 
 1. **Lock.** `mkdir "${XDG_RUNTIME_DIR:-/tmp}/factory-<repo dir name>.lock"`. If it exists and is younger than three hours, another pass runs: stop. If older, take it over. Remove it when the pass ends, also on failure.
-2. **Update.** `git -C "$repo" fetch <remote> --prune`, and fast-forward `base`.
-3. **Number** the files in `new/` named `<slug>.md`, and any file in `new/` whose number another item in any folder already has (keep the number on the older one). Take the next numbers above the highest in every folder, `done/` and `stop/` included, oldest file first. Rename them with `git mv` in one board commit, `factory: number <ID> <slug>, …`, and push it before anything else; when the push is refused, number again from the pulled board. Only `new/` items are renumbered: they have no branch yet.
-4. **Collect** the item files in `new/`, `review/` and `ready/`: the `*.md` files whose names are `<ID>-<slug>.md` (or the older `<NNNN>-<slug>.md`). Ignore every other file, such as the `.gitkeep` placeholders that keep empty folders in git. An item file that does not parse (header, title or section headings) gets a question section saying what is wrong; never rewrite the owner's text to fix it.
-5. **Handle** them oldest first by last change (`git log -1 --format=%ct -- <file>`), skipping items that wait. Start at most one build per pass; fix rounds are not limited.
-6. **End.** Release the lock and end with a short summary: each item touched, its move, and what the owner should look at.
+2. **Recover.** `repo` belongs to the factory, and the lock rules out a running pass, so anything left in it was left by a pass that stopped (killed, timed out, crashed). Clear it, keeping a copy, and say so in the summary:
+   - An unfinished rebase or merge: `git rebase --abort` or `git merge --abort`.
+   - Not on `base`: `git checkout <base>` (after the next point, if it refuses).
+   - Uncommitted changes or untracked files: `git stash push --include-untracked -m "factory: left by a stopped pass <time>"`.
+   - Local commits on `base` not on `<remote>/<base>` (a board commit that was never pushed): keep them as `git update-ref refs/factory/stopped/<YYYYMMDD-HHMM> <base>`, then `git reset --hard <remote>/<base>` after the fetch below.
+   The pass redoes whatever was cut short. Never push the saved copies; the owner can look at them with `git stash list` and `git log refs/factory/stopped/<…>`.
+3. **Update.** `git -C "$repo" fetch <remote> --prune`, and fast-forward `base`.
+4. **Number** the files in `new/` named `<slug>.md`, and any file in `new/` whose number another item in any folder already has (keep the number on the older one). Take the next numbers above the highest in every folder, `done/` and `stop/` included, oldest file first. Rename them with `git mv` in one board commit, `factory: number <ID> <slug>, …`, and push it before anything else; when the push is refused, number again from the pulled board. Only `new/` items are renumbered: they have no branch yet.
+5. **Collect** the item files in `new/`, `review/` and `ready/`: the `*.md` files whose names are `<ID>-<slug>.md` (or the older `<NNNN>-<slug>.md`). Ignore every other file, such as the `.gitkeep` placeholders that keep empty folders in git. An item file that does not parse (header, title or section headings) gets a question section saying what is wrong; never rewrite the owner's text to fix it.
+6. **Handle** them oldest first by last change (`git log -1 --format=%ct -- <file>`), skipping items that wait. Start at most one build per pass; fix rounds are not limited.
+7. **End.** Release the lock and end with a short summary: each item touched, its move, and what the owner should look at.
 
 ## Per folder
 
@@ -193,7 +199,7 @@ When a step fails and the case is not here, or it comes back on the next pass, a
 | Symptom | Do |
 |---|---|
 | The lock exists and is fresh | Stop; after three hours the next pass takes it over. |
-| `repo` has uncommitted changes | End the pass; never clean anyone's work. |
+| `repo` has uncommitted changes, local commits or an unfinished rebase | A stopped pass left them: recover as in Each pass, step 2, and go on. |
 | `worktree add`: already exists or checked out | `git -C "$repo" worktree prune`, then reuse the worktree at that path. |
 | A worktree holds changes from a stopped run | Read `git status` and `git diff`; commit what belongs to the item, else `git stash`. |
 | Push of a `factory/` branch refused (non-fast-forward) | Someone pushed to it: `git pull --no-rebase <remote> <branch>`, run `test`, push again. |
