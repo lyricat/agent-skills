@@ -33,9 +33,9 @@ Set rules on the repository (Settings → Rules → Rulesets) so that the server
 
 Do not require linear history on `factory/**`: fix rounds merge `base` into the branch.
 
-## Keeping the token from the coding agent
+## Keeping the token from the coding agent (optional)
 
-The factory pushes; the coding agent and the tests must not be able to. When the runner starts them:
+The skill runs the coding agent and the tests in the factory's own environment: their task tells them not to push, and the factory checks their commits before it pushes. For a stricter setup, where they cannot push even if they try, the runner starts them like this:
 
 - Unset `GH_TOKEN`, `GITHUB_TOKEN` and any variable the wrapper reads.
 - Disable git's credential helper for them, so a `git push` in the worktree fails. Worktrees share the repository's git config, so set it in the environment: `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=credential.helper GIT_CONFIG_VALUE_0=` (an empty value clears the helper list).
@@ -48,4 +48,4 @@ From a throwaway clone, as the App:
 - `git push` of a commit that changes only `.factory/` to `base`: accepted.
 - `git push --force` to `base` or a `factory/` branch: refused.
 - A push that changes `.github/workflows/`: refused.
-- `git push` from a build worktree with the coding agent's environment: fails for lack of credentials.
+- With the stricter setup above: `git push` from a build worktree with the coding agent's environment fails for lack of credentials.

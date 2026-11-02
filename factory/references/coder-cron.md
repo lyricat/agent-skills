@@ -26,8 +26,7 @@ For every build and fix round, use $coder with Codex as the coding agent.
 In the task you give Codex, say plainly that it must commit its work on
 the branch but never push, fetch or run gh; only the factory pushes.
 Follow the factory's rules: build at most one new item per pass; when a
-request is unclear, ask in the item instead of guessing; Codex gets no
-push or GitHub credentials.
+request is unclear, ask in the item instead of guessing.
 
 Each time, before calling $coder, tell $CONTACT: the item's ID and
 title, and whether it is a build or fix round N. When that build

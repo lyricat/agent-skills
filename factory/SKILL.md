@@ -22,7 +22,7 @@ The runner provides GitHub credentials through git's credential helper and `gh`;
 
 - Never read, print, store or commit a token, and never set up credentials yourself.
 - When the task says git has no credential helper and `gh` gives credentials, run each fetch, pull and push with `gh` as the helper for that command only, so the token goes from `gh` straight to git: `GH_REPO=<OWNER/REPO> git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push …`. Never put a token in a variable, a file, a remote URL or the git config.
-- Run the coding agent and `test` without the factory's credentials: unset `GH_TOKEN` and `GITHUB_TOKEN`, set `GH_CONFIG_DIR` to an empty directory so `gh` has no stored login, clear git's credential helper with `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=credential.helper GIT_CONFIG_VALUE_0=`, and leave `gh` off their `PATH`: a `gh` that mints tokens itself, such as a GitHub App wrapper, ignores all of the above. Run the coding agent in its own sandbox without network when it has one. Only the factory pushes.
+- The coding agent and `test` run in the factory's own environment: through the runner's `coder` tool as it is, or the agent's CLI. Do not set up a separate environment for them. The agent's task tells it not to push, fetch or run `gh` (Build, step 3), and the factory checks its commits before pushing (Build, step 5). Only the factory pushes. A runner that wants the agent unable to push even if it tries can start it as `references/github-app.md` shows; that is the runner's choice, not a condition for building.
 - A fetch or push refused for authentication or permission is not a conflict: retry once, then end the pass and say what was refused.
 
 ## The board
@@ -168,7 +168,7 @@ The item stays in `new/` while it is built; the board changes only when the buil
 3. Run a coding agent in the worktree (Claude Code: the runner's `coder` tool when it has one, else `claude -p`) with a task that holds the item's title, thread and plan, and these rules, plus `rules`:
    - Implement the plan. Follow the repository's own instructions (`AGENTS.md`, `CLAUDE.md`) and the `read` files.
    - Run `test` (and `after_change` when needed) until it passes. Commit in one or a few commits, each on one topic, titled in the history's style.
-   - Do not push, touch other branches, change paths in `never`, run install or deploy commands, or change the user's files, settings or windows. Scripted tests get a throwaway `HOME`.
+   - Do not push, fetch, run `gh`, touch other branches, change paths in `never`, run install or deploy commands, or change the user's files, settings or windows. Scripted tests get a throwaway `HOME`.
    - End with what changed, the test result, and what could not be checked here.
 4. If it ends with no commits, run it once more with what is missing; then append the plan and a question saying what is missing.
 5. Verify yourself: `git log <remote>/<base>..HEAD` holds only work for this item, no path in `never` changed, and `test` passes. If the tests fail, give the agent the failure once more; if they still fail, append the plan and a question with the failure, and keep the branch.
