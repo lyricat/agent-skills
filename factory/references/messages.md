@@ -1,6 +1,6 @@
 # Messages to people
 
-How the factory and its jobs word and format a notice: a build starting or finishing, an item reaching `ready/`, a review asking for fixes, a pass summary. The text is the same everywhere; only the markup changes with where it goes.
+How the manager words and formats a message to the contact: a build or review starting or finishing, an install, a failing test, a review asking for fixes, a ship, a run summary. The text is the same everywhere; only the markup changes with where it goes.
 
 ## Content
 

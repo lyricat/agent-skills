@@ -18,28 +18,29 @@
 # To edit the board, keep a second worktree of it beside your clone:
 #   git worktree add ../<repo>-board factory_board
 
-# The branch you merge into; builds start from it. The factory never
-# pushes to it. The remote is the job's (default origin), not set here.
+# The branch builds start from, and a ship run merges into: the only
+# time the factory pushes to it. The remote is origin.
 base = "master"
 
 # Names whose "## name · time" sections count as yours: requests,
-# answers and review notes. Sections by other names are read as
+# answers and notes. Sections by other names are read as
 # information only.
 owners = ["alex"]
 
-# What must pass before anything reaches ready/.
+# What must pass: after each build, in each review, and on base before
+# a ship run pushes it.
 test = "make test"
 
 # Run after changes that need generated files or catalogs updated.
 after_change = []
 
-# Read before analysing a request or building it.
+# Read before building or reviewing.
 read = ["AGENTS.md"]
 
 # Paths the factory must never change.
 never = [".github/workflows/", ".factory/factory.toml"]
 
-# Added to the coding agent's rules for this repository.
+# Added to the coder's rules for this repository.
 rules = [
   "Scripted tests get a throwaway HOME.",
 ]
@@ -47,17 +48,6 @@ rules = [
 # Capital letters before item numbers: FT16 in file names, branches and
 # messages, so they are not mistaken for issue or PR numbers. Default: FT.
 prefix = "FT"
-
-# true when a review job (references/review-cron.md) reviews each build:
-# an item in review/ then waits for a review of its latest commit, and
-# reaches ready/ only when that review has no P0 or P1 finding.
-review = false
-
-# Fix rounds on one item before the factory stops and asks you.
-max_rounds = 3
-
-# Run when an item reaches ready/; {title} and {text} are filled in.
-notify = "notify-send -a factory {title} {text}"
 
 # The clock for section times and the board page (scripts/board.py),
 # so CI in UTC shows the same times as the files. Default: the machine's.

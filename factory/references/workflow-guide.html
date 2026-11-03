@@ -138,7 +138,7 @@ svg .csub { font-size: 10.5px; fill: var(--muted); }
     <p class="lede">Git works as it always does: code, branches, merges. Only the tracking changes. Features and issues are text files in a <code>.factory/</code> folder on a branch of their own, <code>factory_board</code>, and the folder a file sits in is its progress.</p>
     <div class="legend">
       <span><i class="sw you"></i>human: you</span>
-      <span><i class="sw fac"></i>agent: the factory pass, and Claude Code it runs to write code</span>
+      <span><i class="sw fac"></i>agent: the manager, and the coder it runs to write and review code</span>
     </div>
   </header>
 
@@ -179,42 +179,45 @@ branches:  master         <span class="c">code</span>
       <div class="box">
         <div class="vhead">.factory/review/FT13-sync-icons.md</div>
 <pre><span class="f">---
+source: issue #47
 branch: factory/FT13-sync-icons
 round: 1
 ---</span>
 # Icons sync from the server
 
 <span class="y">## alex · 2026-11-03 09:10
-Fetch the icons at start and when the
-server says they changed.</span>
+Copied from GitHub issue #47. Fetch the icons
+at start and when the server says they changed.</span>
 
-<span class="f">## factory · question · 2026-11-03 09:30
-1. Keep the old icons offline? Default: yes.</span>
-
-<span class="y">## alex · 2026-11-03 12:00
-Yes.</span>
-
-<span class="f">## factory · plan · 2026-11-03 12:10
+<span class="f">## factory · plan · 2026-11-03 09:30
 Behaviour: fetch at start and on the server's
   change signal; offline, keep the old icons.
 Scope: src/icons.go. Not the settings page.
+Decisions: offline keeps the old icons.
 Checking: a test for the sync; the icons by eye.</span>
 
-<span class="f">## factory · 2026-11-03 12:30
+<span class="f">## factory · 2026-11-03 09:50
 Built on factory/FT13-sync-icons. Tests pass.</span>
 
-<span class="y">## alex · 2026-11-03 16:20
-src/icons.go:90: keep the cache between syncs.</span>
+<span class="f">## factory · review · 2026-11-03 10:30
+head: 8b07d24a…
+verdict: fix
+fix:
+- [P1] src/icons.go:90: the cache is dropped
+  between syncs.</span>
 
-<span class="f">## factory · 2026-11-03 16:30
+<span class="y">## alex · 2026-11-03 11:00
+Keep the cache between syncs.</span>
+
+<span class="f">## factory · 2026-11-03 11:40
 Round 1: the cache stays (icons.go:90).</span></pre>
       </div>
       <ul class="notes">
-        <li><b>Header</b><span>Between the <code>---</code> lines; the factory fills it in. You can leave it out when you write a new file.</span></li>
+        <li><b>Header</b><span>Between the <code>---</code> lines; the factory fills it in: the GitHub issue or PR it came from, its branch, the fix round. Leave it out when you write a new file.</span></li>
         <li><b>Title</b><span>The first <code>#</code> line: what you want.</span></li>
-        <li><b>Conversation</b><span>Sections headed <code>## name · time</code>, added at the end, never edited. It replaces an issue tracker's comments: questions, answers, review notes. A <code>question</code> section from the factory means the item waits for your answer, in whatever folder it is. Inside a section, write Markdown freely, headings included: only <code>## name · time</code> starts a new section.</span></li>
-        <li><b>Plan</b><span>Once the item is clear, the factory writes a <code>plan</code> section: behaviour, scope, decisions, how it's checked. It's the brief Claude Code builds from, and in <code>done/</code> the file keeps the whole story.</span></li>
-        <li><b>Review notes</b><span>Write <code>file:line: what to change</code>. The next pass fixes it on the same branch and answers each point.</span></li>
+        <li><b>Conversation</b><span>Sections headed <code>## name · time</code>, added at the end, never edited. It replaces an issue tracker's comments: your request and notes, the plan, reports, reviews. Inside a section, write Markdown freely, headings included: only <code>## name · time</code> starts a new section.</span></li>
+        <li><b>Plan</b><span>The build writes a <code>plan</code> section first: behaviour, scope, the decisions it took where the request was open, how it's checked. It's the brief the coder builds from, and in <code>done/</code> the file keeps the whole story.</span></li>
+        <li><b>Your notes</b><span>Write <code>file:line: what to change</code> before you move an item back to <code>new/</code>. The next build fixes it on the same branch and answers each point.</span></li>
       </ul>
     </div>
   </section>
@@ -222,7 +225,7 @@ Round 1: the cache stays (icons.go:90).</span></pre>
   <section aria-labelledby="config-h">
     <span class="kicker">Settings</span>
     <h2 id="config-h">factory.toml</h2>
-    <p>One file in <code>.factory/</code> on <code>factory_board</code> tells the agent how to work on this repository. You write it once and commit it; the agent reads it at the start of every pass and never changes it.</p>
+    <p>One file in <code>.factory/</code> on <code>factory_board</code> tells the agent how to work on this repository. You write it once and commit it; the agent reads it at the start of every run and never changes it.</p>
     <div class="split">
       <div class="box">
         <div class="vhead">.factory/factory.toml</div>
@@ -239,21 +242,17 @@ Round 1: the cache stays (icons.go:90).</span></pre>
   "Scripted tests get a throwaway HOME.",
 ]
 
-<span class="y">review</span> = false
-<span class="y">max_rounds</span> = 3
-<span class="y">notify</span> = "notify-send -a factory {title} {text}"</pre>
+<span class="y">prefix</span> = "FT"
+<span class="y">timezone</span> = "Europe/Berlin"</pre>
       </div>
       <ul class="notes">
-        <li><b>base</b><span>The branch you merge into. Work branches start from the newest <code>base</code>; the agent never pushes to it.</span></li>
+        <li><b>base</b><span>Work branches start from the newest <code>base</code>, and a ship merges into it: the only time the agent pushes it.</span></li>
         <li><b>owners</b><span>The names you sign your sections with. Only their sections are requests, answers and review notes; anyone else's is read as information.</span></li>
-        <li><b>test</b><span>The command that must pass before an item reaches <code>ready/</code>. The agent runs it after every build and fix round.</span></li>
+        <li><b>test</b><span>The command that must pass: after each build, in each review, and on <code>base</code> before a ship pushes it.</span></li>
         <li><b>after_change</b><span>Commands to run when generated files need updating, such as compiled layouts or translation catalogs.</span></li>
-        <li><b>read</b><span>Files the agent reads before it analyses a request or builds it: your conventions, architecture, design rules.</span></li>
+        <li><b>read</b><span>Files the agent reads before it builds or reviews: your conventions, architecture, design rules.</span></li>
         <li><b>never</b><span>Paths the agent must not change, on any branch. A build that touches one is undone.</span></li>
-        <li><b>rules</b><span>Extra instructions for Claude Code in this repository, on top of the general ones: what not to touch on this machine, how to test safely.</span></li>
-        <li><b>review</b><span>Set it to <code>true</code> when a review job reviews each build. A built item then waits in <code>review/</code> until its latest commit has a review without P0 or P1 findings; a review with them starts a fix round.</span></li>
-        <li><b>max_rounds</b><span>Fix rounds on one item before the agent stops and asks you, listing what's left.</span></li>
-        <li><b>notify</b><span>Run when an item reaches <code>ready/</code>; <code>{title}</code> and <code>{text}</code> are filled in. Leave it out to get the news only in the pass's summary.</span></li>
+        <li><b>rules</b><span>Extra instructions for the coder in this repository, on top of the general ones: what not to touch on this machine, how to test safely.</span></li>
       </ul>
     </div>
   </section>
@@ -261,33 +260,31 @@ Round 1: the cache stays (icons.go:90).</span></pre>
   <section aria-labelledby="move-h">
     <span class="kicker">2 · Progress</span>
     <h2 id="move-h">Who moves a file between folders</h2>
-    <p>The factory moves every file except to add, start, park or resume one. It numbers what you put in <code>backlog/</code> and leaves it alone otherwise: no questions, no builds, until you move the file to <code>new/</code>. A question never moves a file: it waits where it is until you answer. Orange folders wait for you.</p>
+    <p>You put files in <code>backlog/</code> and <code>new/</code>. Two scheduled runs move them on, one item each time: a <b>build</b> takes one from <code>new/</code> to <code>review/</code>, a <b>review</b> takes one from <code>review/</code> to <code>ready/</code>. Nobody waits for an answer on the way: the coder decides what the request leaves open, resolves conflicts, installs what's missing and fixes failing tests, and the manager tells you as it goes. Orange folders wait for you.</p>
     <div class="figure">
       <svg viewBox="0 0 820 280" role="img" aria-label="Folders and who moves files between them">
         <defs>
           <marker id="af" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-f" d="M0,0 L10,5 L0,10 z"/></marker>
           <marker id="ay" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-y" d="M0,0 L10,5 L0,10 z"/></marker>
         </defs>
-        <path class="edge" d="M135 80 C 125 36, 185 36, 175 78" marker-end="url(#af)"/>
-        <text class="elabel" x="150" y="28" text-anchor="middle">unclear: a question, your answer</text>
         <path class="edge" d="M210 104 L288 104" marker-end="url(#af)"/>
-        <text class="elabel" x="249" y="96" text-anchor="middle">built</text>
-        <path class="edge" d="M325 128 C 315 172, 375 172, 365 130" marker-end="url(#af)"/>
-        <text class="elabel" x="385" y="172">review note or P0/P1: fix round</text>
+        <text class="elabel" x="249" y="96" text-anchor="middle">build</text>
         <path class="edge" d="M400 104 L478 104" marker-end="url(#af)"/>
-        <text class="elabel" x="439" y="96" text-anchor="middle">all good</text>
-        <path class="edge" d="M520 80 Q 470 36 394 80" marker-end="url(#af)"/>
-        <text class="elabel" x="458" y="40" text-anchor="middle">you asked more</text>
+        <text class="elabel" x="439" y="96" text-anchor="middle">no P0/P1</text>
+        <path class="edge you" d="M320 80 Q 250 30 180 80" marker-end="url(#ay)"/>
+        <text class="elabel" x="250" y="34" text-anchor="middle">P0/P1: you send it back</text>
+        <path class="edge you" d="M520 80 Q 360 -10 200 82" marker-end="url(#ay)"/>
+        <text class="elabel" x="470" y="22" text-anchor="middle">ship: not ok</text>
         <path class="edge" d="M590 104 L668 104" marker-end="url(#af)"/>
-        <text class="elabel" x="629" y="96" text-anchor="middle">you merged</text>
+        <text class="elabel" x="629" y="96" text-anchor="middle">ship: merged</text>
         <path class="edge you" d="M20 104 L98 104" marker-end="url(#ay)"/>
         <text class="elabel" x="58" y="96" text-anchor="middle">you add</text>
         <path class="edge you" d="M20 234 L98 234" marker-end="url(#ay)"/>
         <text class="elabel" x="58" y="226" text-anchor="middle">an idea</text>
-        <path class="edge you" d="M135 210 L135 130" marker-end="url(#ay)"/>
-        <text class="elabel" x="143" y="175">build it</text>
-        <path class="edge you" d="M310 210 C 300 170, 200 170, 190 130" marker-end="url(#ay)"/>
-        <text class="elabel" x="222" y="204">resume</text>
+        <path class="edge you" d="M125 210 L125 130" marker-end="url(#ay)"/>
+        <text class="elabel" x="117" y="175" text-anchor="end">build it</text>
+        <path class="edge" d="M185 130 L185 208" marker-end="url(#af)"/>
+        <text class="elabel" x="193" y="175">can't be built</text>
         <path class="edge you" d="M480 234 L402 234" marker-end="url(#ay)"/>
         <text class="elabel" x="488" y="238">park any file, any time</text>
         <g class="dir"><rect x="100" y="80" width="110" height="48"/><text x="155" y="104">new/</text></g>
@@ -298,6 +295,11 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <g class="dir"><rect x="290" y="210" width="110" height="48"/><text x="345" y="234">stop/</text></g>
       </svg>
     </div>
+    <ul class="brules">
+      <li><strong>review/ waits for you</strong> only when a review found P0 or P1. Read the findings; to have it fixed, add a note and <code>git mv</code> it to <code>new/</code>. The next build fixes it on the same branch, and it comes back for another review.</li>
+      <li><strong>ready/ waits for you</strong> until you check it and tell the manager to ship (section 4).</li>
+      <li><strong>backlog/ is yours.</strong> The factory only numbers what's there. A build moves an item back there, with the reason, when it can't be built at all.</li>
+    </ul>
   </section>
 
   <section aria-labelledby="branch-h">
@@ -316,38 +318,32 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <path class="line" d="M300 150 C 330 150, 330 260, 360 260 L 680 260 C 720 260, 730 150, 770 150"/>
         <path class="line" d="M520 150 C 545 150, 545 260, 570 260"/>
         <!-- factory_board -->
-        <circle class="cm h" cx="130" cy="60" r="8"/>
-        <text class="clabel" x="130" y="38" text-anchor="middle">new: FT16</text>
-        <text class="csub" x="130" y="24" text-anchor="middle">you add</text>
-        <circle class="cm a" cx="215" cy="60" r="8"/>
-        <text class="clabel" x="215" y="38" text-anchor="middle">FT16 question</text>
-        <text class="csub" x="215" y="24" text-anchor="middle">agent asks</text>
-        <circle class="cm h" cx="300" cy="60" r="8"/>
-        <text class="clabel" x="300" y="38" text-anchor="middle">answer: FT16</text>
-        <text class="csub" x="300" y="24" text-anchor="middle">you answer</text>
+        <circle class="cm h" cx="150" cy="60" r="8"/>
+        <text class="clabel" x="150" y="38" text-anchor="middle">new: FT16</text>
+        <text class="csub" x="150" y="24" text-anchor="middle">you add</text>
         <circle class="cm a" cx="440" cy="60" r="8"/>
         <text class="clabel" x="440" y="38" text-anchor="middle">FT16 → review</text>
-        <text class="csub" x="440" y="24" text-anchor="middle">built</text>
+        <text class="csub" x="440" y="24" text-anchor="middle">build</text>
+        <circle class="cm a" cx="640" cy="60" r="8"/>
+        <text class="clabel" x="640" y="38" text-anchor="middle">FT16 → ready</text>
+        <text class="csub" x="640" y="24" text-anchor="middle">review: pass</text>
         <circle class="cm a" cx="845" cy="60" r="8"/>
         <text class="clabel" x="845" y="38" text-anchor="middle">FT16 → done</text>
-        <text class="csub" x="845" y="24" text-anchor="middle">merge seen</text>
+        <text class="csub" x="845" y="24" text-anchor="middle">ship</text>
         <!-- master -->
-        <circle class="cm h" cx="520" cy="150" r="8"/>
+        <circle class="cm a" cx="520" cy="150" r="8"/>
         <text class="clabel" x="520" y="128" text-anchor="middle">merge FT15</text>
-        <text class="csub" x="520" y="114" text-anchor="middle">another item</text>
-        <circle class="cm h" cx="770" cy="150" r="8"/>
+        <text class="csub" x="520" y="114" text-anchor="middle">an earlier ship</text>
+        <circle class="cm a" cx="770" cy="150" r="8"/>
         <text class="clabel" x="770" y="128" text-anchor="middle">merge FT16</text>
-        <text class="csub" x="770" y="114" text-anchor="middle">you accept</text>
+        <text class="csub" x="770" y="114" text-anchor="middle">ship: you said fine</text>
         <!-- branch -->
         <circle class="cm a" cx="400" cy="260" r="8"/>
         <text class="clabel" x="400" y="288" text-anchor="middle">search box</text>
-        <text class="csub" x="400" y="303" text-anchor="middle">Claude Code</text>
+        <text class="csub" x="400" y="303" text-anchor="middle">coder</text>
         <circle class="cm a" cx="570" cy="260" r="8"/>
         <text class="clabel" x="570" y="288" text-anchor="middle">merge master</text>
-        <text class="csub" x="570" y="303" text-anchor="middle">master moved on</text>
-        <circle class="cm a" cx="670" cy="260" r="8"/>
-        <text class="clabel" x="670" y="288" text-anchor="middle">fix round 1</text>
-        <text class="csub" x="670" y="303" text-anchor="middle">your review note</text>
+        <text class="csub" x="570" y="303" text-anchor="middle">conflict resolved</text>
       </svg>
     </div>
     <div class="legend">
@@ -355,92 +351,77 @@ Round 1: the cache stays (icons.go:90).</span></pre>
       <span><i class="sw fac"></i>a commit the agent makes</span>
     </div>
     <ul class="brules">
-      <li><strong>Start.</strong> When an item becomes clear, the agent branches from the newest <code>master</code>. One item, one branch; the ID in the file name is the ID in the branch name.</li>
-      <li><strong>Build and fix.</strong> Claude Code commits the code on that branch, and every fix round adds commits to the same branch. The agent pushes it; it never force-pushes or rewrites it.</li>
-      <li><strong>Keeping up.</strong> When <code>master</code> moves on and the branch no longer merges cleanly, the agent merges <code>master</code> into the branch and runs the tests again. It doesn't rebase, so what you already reviewed keeps its commits.</li>
-      <li><strong>Board apart.</strong> The agent's board commits go to <code>factory_board</code> and only move files and add sections under <code>.factory/</code>. It never pushes to <code>master</code>, and <code>factory_board</code> is never merged anywhere.</li>
-      <li><strong>Finish.</strong> You merge the branch into <code>master</code>. For a file in <code>ready/</code>, the next pass sees the merge and moves it to <code>done/</code>; otherwise, or after a squash or rebase merge, move it yourself. However a file reaches <code>done/</code>, the next pass where <code>gh</code> works closes what it links: the issues and PRs your sections name with <code>Closes #12</code>, <code>Fixes #12</code> or <code>Resolves #12</code>, the issue or PR the item builds, and the branch's open PRs. It notes what it closed in a last section, once. Deleting the branch is yours too; the agent never deletes a branch.</li>
+      <li><strong>Start.</strong> A build branches from the newest <code>master</code>, or, for an item copied from a GitHub PR, from that PR's head. One item, one branch; the ID in the file name is the ID in the branch name.</li>
+      <li><strong>Build and fix.</strong> The coder commits on that branch, and a fix round adds commits to the same branch. The manager pushes it; it never force-pushes or rewrites it.</li>
+      <li><strong>Keeping up.</strong> When the branch conflicts with <code>master</code> (a PR, or <code>master</code> moved on), the coder merges <code>master</code> into it and resolves the conflict before going on. No rebase, so what was reviewed keeps its commits.</li>
+      <li><strong>Board apart.</strong> Board commits go to <code>factory_board</code> and only move files and add sections under <code>.factory/</code>. <code>factory_board</code> is never merged anywhere.</li>
+      <li><strong>Ship.</strong> Only when you say so, the manager merges the items you called fine into <code>master</code>, one merge commit each; the coder resolves any conflict. It runs the tests on the result, pushes <code>master</code>, closes the linked GitHub issues and PRs with a comment, and moves the items to <code>done/</code>. It never deletes a branch.</li>
     </ul>
   </section>
 
   <section aria-labelledby="day-h">
     <span class="kicker">4 · Daily use</span>
     <h2 id="day-h">A day with the factory</h2>
-    <p>Code in your usual clone, <code>sample-project/</code>; the board in its worktree beside it, <code>sample-board/</code>. A pass runs by itself every 30 minutes.</p>
+    <p>The board in a worktree beside your clone, <code>sample-board/</code>. The build and review runs go by themselves every 30 minutes; messages reach you in your chat.</p>
     <ol class="day">
       <li>
         <span class="t you">09:00</span>
         <div class="body">
-          <h3>See what waits for you</h3>
-          <div class="box"><pre><span class="p">$ </span>cd ../sample-board && git pull
-<span class="p">$ </span>python3 board.py -o board.html     <span class="c"># or: ls .factory/review .factory/ready</span>
-<span class="o">.factory/review:
-.factory/ready:
-FT12-export-csv.md</span></pre></div>
-        </div>
-      </li>
-      <li>
-        <span class="t you">09:05</span>
-        <div class="body">
-          <h3>Merge what's ready</h3>
-          <p>Read the branch and merge it. The next pass moves the file to <code>done/</code>.</p>
-          <div class="box"><pre><span class="p">$ </span>cd ../sample-project && git fetch
-<span class="p">$ </span>git diff master...origin/factory/FT12-export-csv
-<span class="p">$ </span>git merge origin/factory/FT12-export-csv && git push</pre></div>
+          <h3>Check what's ready</h3>
+          <div class="box"><pre><span class="p">$ </span>cd sample-board && git pull
+<span class="p">$ </span>python3 board.py -o board.html     <span class="c"># or: ls .factory/ready</span>
+<span class="o">.factory/ready:
+FT12-export-csv.md  FT13-sync-icons.md</span></pre></div>
+          <p>Read each branch (the link is in the item and in the message you got). Then tell the manager:</p>
+          <div class="box"><pre><span class="y">ship: FT12 is fine. FT13 back to new: keep the cache between syncs.</span>
+<span class="o">FT12 merged into master, tests pass, issue #47 closed, now in done/
+FT13 back in new/ with your note</span></pre></div>
+          <p>Or just: <i>all ready items are fine</i>.</p>
         </div>
       </li>
       <li>
         <span class="t you">09:15</span>
         <div class="body">
           <h3>Add a feature or an issue</h3>
-          <p>A new file in <code>new/</code>, named by a few words; the agent gives it the next ID, so two people adding at once never clash. Write it as you'd tell a colleague. Not sure yet? Put it in <code>backlog/</code> instead; it gets its ID and waits there, untouched, until you move it to <code>new/</code>.</p>
-          <div class="box"><pre><span class="p">$ </span>cd ../sample-board && $EDITOR .factory/new/search-box.md
+          <p>A file in <code>new/</code> when it's clear, in <code>backlog/</code> when it isn't yet; the agent gives it the next ID. From GitHub, name the issue or PR in your section: the item then builds on a PR's branch, and the issue or PR gets the review and is closed on ship.</p>
+          <div class="box"><pre><span class="p">$ </span>$EDITOR .factory/new/search-box.md
 <span class="add">  # Search box in the toolbar
 
   ## alex · 2026-11-04 09:15
-  Filter the list as I type; Esc clears it.</span>
+  Copied from GitHub issue #51. Filter the list as I type; Esc clears it.</span>
 <span class="p">$ </span>git add .factory && git commit -m "new: search box" && git push</pre></div>
         </div>
       </li>
       <li>
         <span class="t fac">09:30</span>
         <div class="body">
-          <h3>A pass runs</h3>
-          <p>It reads FT16, finds one unclear point, writes a question section at the end of the file and pushes. The file stays in <code>new/</code> and waits for you.</p>
-          <div class="box"><pre><span class="o">FT16 search-box   new/   1 question</span></pre></div>
+          <h3>A build runs</h3>
+          <p>One item from <code>new/</code>: a plan, the code on its branch, tests, the branch pushed, the file moved to <code>review/</code>. You hear when it starts, what it installed, any test it couldn't fix, and when it's done.</p>
+          <div class="box"><pre><span class="o">FT16 Search box in the toolbar: build started
+FT16 installed golangci-lint (go install), for the lint test
+FT16 pushed, tests pass, now in review/</span></pre></div>
         </div>
       </li>
       <li>
-        <span class="t you">10:00</span>
+        <span class="t fac">10:00</span>
         <div class="body">
-          <h3>Answer the question</h3>
-          <p>Add your section at the end and push. Leave the file where it is.</p>
-          <div class="box"><pre><span class="p">$ </span>git pull && $EDITOR .factory/new/FT16-search-box.md
-<span class="add">  ## alex · 2026-11-04 10:00
-  Yes, case-insensitive.</span>
-<span class="p">$ </span>git commit -am "answer: FT16" && git push</pre></div>
+          <h3>A review runs</h3>
+          <p>One item from <code>review/</code>. Without P0 or P1 it moves to <code>ready/</code>; with them it stays, and you decide.</p>
+          <div class="box"><pre><span class="o">FT16 review started
+FT16 review: fix
+- [P1] src/toolbar.go:58: Esc clears the list, not the search text.</span></pre></div>
         </div>
       </li>
       <li>
-        <span class="t fac">10:30</span>
+        <span class="t you">10:15</span>
         <div class="body">
-          <h3>The next pass builds it</h3>
-          <p>A plan section in the item file, the code on <code>factory/FT16-search-box</code>, tests run, branch pushed, file moved to <code>review/</code>, and a notification for you.</p>
-          <div class="box"><pre><span class="o">FT16 search-box   new/ → review/   branch factory/FT16-search-box</span></pre></div>
-        </div>
-      </li>
-      <li>
-        <span class="t you">14:00</span>
-        <div class="body">
-          <h3>Review: accept, or ask for a change</h3>
-          <p>With a review job (section 5), it reviews first and only clean builds reach <code>ready/</code>; you can still add notes of your own. Without one, read the branch. Good: merge it, and <code>git mv</code> the file to <code>done/</code> yourself, since only files in <code>ready/</code> move there on their own. Not yet: write what to change, and the next pass fixes it on the same branch.</p>
-          <div class="box"><pre><span class="p">$ </span>cd ../sample-project && git fetch
-<span class="p">$ </span>git diff master...origin/factory/FT16-search-box
-<span class="p">$ </span>cd ../sample-board && git pull
-<span class="p">$ </span>$EDITOR .factory/review/FT16-search-box.md
-<span class="add">  ## alex · 2026-11-04 14:00
-  src/toolbar.go:41: keep the text when the list reloads.</span>
-<span class="p">$ </span>git commit -am "review: FT16" && git push</pre></div>
+          <h3>Send it back to be fixed</h3>
+          <p>Add a note if you like, and move the file to <code>new/</code>. The next build fixes it on the same branch, from your note and the review's P0 and P1 list.</p>
+          <div class="box"><pre><span class="p">$ </span>git pull && git mv .factory/review/FT16-search-box.md .factory/new/
+<span class="p">$ </span>$EDITOR .factory/new/FT16-search-box.md
+<span class="add">  ## alex · 2026-11-04 10:15
+  Fix the P1; keep the text when the list reloads too.</span>
+<span class="p">$ </span>git add .factory && git commit -m "FT16 back to new" && git push</pre></div>
         </div>
       </li>
     </ol>
@@ -451,11 +432,12 @@ FT12-export-csv.md</span></pre></div>
         <thead><tr><th>You want to</th><th>Do</th></tr></thead>
         <tbody>
           <tr><td>Edit the board</td><td>in the <code>factory_board</code> worktree; pull before, push after</td></tr>
-          <tr><td>See what waits for you</td><td><code>python3 board.py -o board.html</code>: the cards marked <i>you</i></td></tr>
+          <tr><td>See what waits for you</td><td><code>python3 board.py -o board.html</code>: the cards marked <i>decide</i> or <i>check</i></td></tr>
           <tr><td>Add a feature or issue</td><td>a file in <code>.factory/new/</code>, push</td></tr>
           <tr><td>Keep an idea for later</td><td>a file in <code>.factory/backlog/</code>, push; <code>git mv</code> it to <code>new/</code> when it should be built</td></tr>
-          <tr><td>Answer, or ask for a change</td><td>add <code>## yourname · time</code> at the end of its file, push</td></tr>
-          <tr><td>Accept a build</td><td>merge its branch, push; from <code>ready/</code> the factory moves the file to <code>done/</code>, from <code>review/</code> you <code>git mv</code> it</td></tr>
+          <tr><td>Fix after a P0/P1 review</td><td>a note at the end of its file, <code>git mv</code> it to <code>new/</code>, push</td></tr>
+          <tr><td>Accept builds</td><td>tell the manager which <code>ready/</code> items are fine (or all); it merges them</td></tr>
+          <tr><td>Reject a ready build</td><td>tell the manager to send it to <code>new/</code> (with what to change) or <code>backlog/</code></td></tr>
           <tr><td>Pause or resume</td><td><code>git mv</code> to <code>stop/</code>, or back to <code>new/</code>, push</td></tr>
         </tbody>
       </table>
@@ -463,16 +445,16 @@ FT12-export-csv.md</span></pre></div>
   </section>
 
   <section aria-labelledby="gate-h">
-    <span class="kicker">5 · Optional review job</span>
-    <h2 id="gate-h">Review before ready/</h2>
-    <p>With <code>review = true</code> in <code>factory.toml</code>, a second scheduled job reviews every build, and the factory waits for it. An item reaches <code>ready/</code> only when its latest commit has a review without P0 or P1 findings and the tests pass merged with <code>master</code>. Sample prompts for the job are in <code>review-cron.md</code> (in a clone) and <code>review-cron.gh.md</code> (through <code>gh</code>).</p>
+    <span class="kicker">5 · Reviews</span>
+    <h2 id="gate-h">What a review writes</h2>
+    <p>The review run has the coder review the branch against the request and plan, and run the tests. The manager writes the result into the item and comments it on the linked GitHub issue or PR. Sample prompts for the two scheduled runs are in <code>build-cron.md</code> and <code>review-cron.md</code>.</p>
     <div class="split">
       <div class="box">
         <div class="vhead">.factory/review/FT16-search-box.md</div>
-<pre><span class="f">## factory · 2026-11-04 10:30
+<pre><span class="f">## factory · 2026-11-04 09:40
 Built on factory/FT16-search-box. Tests pass.</span>
 
-<span class="y">## reviewer · review · 2026-11-04 11:00
+<span class="f">## factory · review · 2026-11-04 10:00
 head: 3f2a1c9e…
 verdict: fix
 fix:
@@ -480,21 +462,13 @@ fix:
   not the search text.
 notes:
 - [P3] src/toolbar.go:30: the filter runs twice
-  per key.</span>
-
-<span class="f">## factory · 2026-11-04 11:30
-Round 1: Esc clears the text (toolbar.go:58).</span>
-
-<span class="y">## reviewer · review · 2026-11-04 12:00
-head: 8b07d24a…
-verdict: pass</span></pre>
+  per key.</span></pre>
       </div>
       <ul class="notes">
-        <li><b>head</b><span>The commit the review is about. It counts only while that is still the branch's latest commit; a fix round or a merge of <code>master</code> needs a new review.</span></li>
-        <li><b>verdict: pass</b><span>No P0 or P1. The next pass tests the merge and moves the item to <code>ready/</code>.</span></li>
-        <li><b>verdict: fix</b><span>The next pass makes a fix round from the <code>fix:</code> list only; <code>notes:</code> are for you. Review rounds count toward <code>max_rounds</code>.</span></li>
-        <li><b>Waiting</b><span>Until its latest commit is reviewed, an item stays in <code>review/</code> and passes leave it alone.</span></li>
-        <li><b>Setup</b><span>Put the job's git name in <code>owners</code>. Your own notes still work as before, and a review never answers a question meant for you.</span></li>
+        <li><b>head</b><span>The commit reviewed. A new commit (a fix round, a merge of <code>master</code>) gets a new review.</span></li>
+        <li><b>verdict: pass</b><span>No P0 or P1: the item moves to <code>ready/</code> in the same run.</span></li>
+        <li><b>verdict: fix</b><span>The item stays in <code>review/</code> and you decide. The next build after you move it to <code>new/</code> fixes the <code>fix:</code> list; <code>notes:</code> are for you.</span></li>
+        <li><b>Tests</b><span>A failing test is a P1 finding, including one the build couldn't fix.</span></li>
       </ul>
     </div>
   </section>
@@ -506,24 +480,23 @@ verdict: pass</span></pre>
       <table>
         <thead><tr><th>Path</th><th>Who</th><th>What they do there</th></tr></thead>
         <tbody>
-          <tr><td class="path">master</td><td><span class="chip h">human</span></td><td>Changes only by your merges. The agent never pushes to <code>master</code>.</td></tr>
+          <tr><td class="path">master</td><td><span class="chip h">human</span><span class="chip a">agent</span></td><td>The agent pushes only in a ship, merging the items you called fine. Otherwise yours.</td></tr>
           <tr><td class="path">factory_board</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The board: only <code>.factory/</code>. Both of you commit here; nobody merges it.</td></tr>
-          <tr><td class="path">factory/&lt;ID&gt;-… branches</td><td><span class="chip a">agent</span></td><td>Claude Code writes the code and fix rounds; the agent pushes, and merges <code>master</code> in when needed. You read them and merge them.</td></tr>
+          <tr><td class="path">factory/&lt;ID&gt;-… branches</td><td><span class="chip a">agent</span></td><td>The coder writes the code, fix rounds and conflict merges; the manager pushes.</td></tr>
           <tr><td class="path">.factory/factory.toml</td><td><span class="chip h">human</span></td><td>You set the test command, what to read first, the paths the agent must not touch.</td></tr>
-          <tr><td class="path">.factory/backlog/</td><td><span class="chip h">human</span></td><td>You keep ideas and rough requests here, and move a file to <code>new/</code> when it should be built. The agent only gives new files their ID.</td></tr>
-          <tr><td class="path">.factory/new/</td><td><span class="chip h">human</span></td><td>You create files here. The agent asks its questions in them and moves them on once built; you answer in the file.</td></tr>
-          <tr><td class="path">.factory/review/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The agent puts a built item here; you, or the review job, read the branch and write review notes in the file.</td></tr>
-          <tr><td class="path">.factory/ready/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The agent puts a finished item here; you merge its branch.</td></tr>
-          <tr><td class="path">.factory/done/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The agent moves a file here from <code>ready/</code> once its branch is merged, and never reads it again. You move the rest: items merged from <code>review/</code>, or by squash or rebase.</td></tr>
-          <tr><td class="path">.factory/stop/</td><td><span class="chip h">human</span></td><td>You park a file here, or move it back to <code>new/</code>. The agent ignores this folder.</td></tr>
-          <tr><td class="path">header (--- … ---)</td><td><span class="chip a">agent</span></td><td>The branch name and the fix round count.</td></tr>
-          <tr><td class="path">## factory · …</td><td><span class="chip a">agent</span></td><td>Questions, the plan, what each build and fix round did.</td></tr>
-          <tr><td class="path">## yourname · …</td><td><span class="chip h">human</span></td><td>The request, answers, review notes. Always added at the end; nobody edits an earlier section.</td></tr>
-          <tr><td class="path">## reviewer · review · …</td><td><span class="chip a">agent</span></td><td>The review job, signed with a name in <code>owners</code>: the commit it reviewed, the verdict, P0/P1 findings to fix and other notes.</td></tr>
+          <tr><td class="path">.factory/backlog/</td><td><span class="chip h">human</span></td><td>Your ideas and unclear requests. The agent numbers them, and moves an item here when it can't be built.</td></tr>
+          <tr><td class="path">.factory/new/</td><td><span class="chip h">human</span></td><td>What you want built, from you, the backlog, GitHub, or back from a review. A build takes one at a time.</td></tr>
+          <tr><td class="path">.factory/review/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>Built items. A review takes one at a time; after a P0/P1 review, you move it back to <code>new/</code>.</td></tr>
+          <tr><td class="path">.factory/ready/</td><td><span class="chip a">agent</span></td><td>Reviewed items, for you to check. The manager moves them on when you tell it.</td></tr>
+          <tr><td class="path">.factory/done/</td><td><span class="chip a">agent</span></td><td>Merged by a ship; linked issues and PRs closed.</td></tr>
+          <tr><td class="path">.factory/stop/</td><td><span class="chip h">human</span></td><td>You park a file here, or move it back. The agent ignores this folder.</td></tr>
+          <tr><td class="path">header (--- … ---)</td><td><span class="chip a">agent</span></td><td>The GitHub source, the branch name and the fix round count.</td></tr>
+          <tr><td class="path">## factory · …</td><td><span class="chip a">agent</span></td><td>The plan, what each build did, reviews, ships.</td></tr>
+          <tr><td class="path">## yourname · …</td><td><span class="chip h">human</span></td><td>The request and your notes. Always added at the end; nobody edits an earlier section.</td></tr>
         </tbody>
       </table>
     </div>
-    <p>If you and a pass push at the same moment, one push is refused; that side pulls and pushes again, as with any two people sharing a branch. Board commits live on <code>factory_board</code>, so <code>master</code>'s history and its CI see only code.</p>
+    <p>If you and a run push the board at the same moment, one push is refused; that side pulls and pushes again. Board commits live on <code>factory_board</code>, so <code>master</code>'s history holds only code and ship merges.</p>
   </section>
 </main>
 </body>

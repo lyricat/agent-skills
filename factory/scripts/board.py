@@ -105,17 +105,21 @@ def moves(repo, path):
     return steps
 
 
-def turn(folder, sections, owners):
-    """Who acts next: "you", "agent" or "" (nobody)."""
+def turn(folder, sections):
+    """Who acts next: "you", "agent" or "" (nobody).
+
+    new/ waits for a build and review/ for a review, unless the latest review
+    found P0 or P1: then you decide. ready/ waits for you to check it.
+    """
     if folder in ("backlog", "done"):
         return ""
-    last_factory = max((i for i, s in enumerate(sections) if s["who"] == "factory"), default=-1)
-    if any(s["who"] in owners for s in sections[last_factory + 1:]):
-        return "agent"
     if folder == "new":
-        # Unbuilt: it waits for you only on the factory's question.
-        asked = last_factory >= 0 and sections[last_factory]["kind"] == "question"
-        return "you" if asked else "agent"
+        return "agent"
+    if folder == "review":
+        mine = [s for s in sections if s["who"] == "factory"]
+        last = mine[-1] if mine else None
+        fix = last and last["kind"] == "review" and re.search(r"^verdict:\s*fix\b", last["body"], re.M)
+        return "you" if fix else "agent"
     return "you"
 
 
@@ -140,7 +144,7 @@ def short(t, year):
 
 
 # What a card asks of you, by folder, when it's your turn.
-ASK = {"new": "answer", "review": "review", "ready": "merge"}
+ASK = {"review": "decide", "ready": "check"}
 
 
 def body_html(text):
@@ -186,7 +190,7 @@ def load(repo):
                 "branch": header.get("branch", ""), "round": header.get("round", ""),
                 "sections": sections, "problems": problems, "steps": steps,
                 "changed": steps[-1][1] if steps else 0,
-                "turn": turn(folder, sections, owners),
+                "turn": turn(folder, sections),
                 "link": branch_link(repo, remote, base, header.get("branch", "")),
             })
     name = os.path.basename(os.path.abspath(repo))

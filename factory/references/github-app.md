@@ -10,16 +10,17 @@ Install the App on the factory's repository only ("Only select repositories"), n
 
 | Permission | Access | Why |
 |---|---|---|
-| Contents | Read and write | Fetch; push board commits to `factory_board`; push `factory/` branches. Never `base`. |
+| Contents | Read and write | Fetch; push board commits to `factory_board` and `factory/` branches; push `base` in a ship run. |
+| Issues | Read and write | Read an item's source issue; comment on it after a review; close it after a ship. |
+| Pull requests | Read and write | The same for PRs, and fetch a PR's head to build on. |
 | Metadata | Read-only | Required by GitHub for every App. |
 
 Leave every other permission at "No access". In particular:
 
 - **Workflows**: no access. GitHub then refuses any push that changes `.github/workflows/`, which enforces that `never` entry on the server.
-- **Pull requests**, **Issues**: no access, unless the factory should close what a merged item links. The factory opens no PRs and writes no issues; the board is files. To have it close linked issues and PRs when an item moves to `done/`, give both Read and write. Without them the close is refused, and the item still moves.
 - **Administration**, **Secrets**, **Actions**, **Environments**: no access.
 
-Add a permission only when a repository setting needs it, such as a `notify` command that comments on an issue (Issues: write).
+The factory opens no issues or PRs: the board is files. Without Issues and Pull requests write, its comments and closes are refused, and it says so in the summary; the items still move.
 
 No account or organization permissions are needed, and the App needs no webhook.
 
@@ -27,11 +28,11 @@ No account or organization permissions are needed, and the App needs no webhook.
 
 Set rules on the repository (Settings → Rules → Rulesets) so that the server also enforces what the skill forbids. Bypass works per ruleset, so keep these separate.
 
-1. **Keep the App off `base`.** A ruleset targeting `base` with "Restrict updates" (or "Require a pull request before merging"), with no bypass for the App. The factory commits the board to `factory_board` and never pushes to `base`, so it needs no bypass anywhere. Do not require signed commits on `factory_board` or `factory/**`: the factory's commits are unsigned.
+1. **`base` only by ship.** A ship run merges into `base` and pushes it, so if `base` requires pull requests or status checks, add the App to that ruleset's bypass list. Build and review runs never push `base`; the skill enforces that, not the server. Do not require signed commits on `base`, `factory_board` or `factory/**`: the factory's commits are unsigned.
 2. **No force-push, no deletion.** A ruleset targeting `base`, `factory_board` and `factory/**` with "Block force pushes" and "Restrict deletions", with no bypass for the App.
 3. **Protected paths** (push rulesets, where the plan offers them). Restrict file paths such as `.factory/factory.toml` and `.github/**`, with no bypass for the App. A push ruleset applies to every branch, so it cannot say "only `.factory/` on `factory_board`"; the skill's own check (Writing to the board, step 4) covers that.
 
-Do not require linear history on `factory/**`: fix rounds merge `base` into the branch.
+Do not require linear history on `base` or `factory/**`: a ship merges with merge commits, and builds merge `base` into a branch.
 
 ## Keeping the token from the coding agent (optional)
 
@@ -46,7 +47,7 @@ The skill runs the coding agent and the tests in the factory's own environment: 
 From a throwaway clone, as the App:
 
 - `git push` of a commit that changes only `.factory/` to `factory_board`: accepted.
-- `git push` of any commit to `base`: refused.
+- `git push` of a merge commit to `base`: accepted.
 - `git push --force` to `base`, `factory_board` or a `factory/` branch: refused.
 - A push that changes `.github/workflows/`: refused.
 - With the stricter setup above: `git push` from a build worktree with the coding agent's environment fails for lack of credentials.
