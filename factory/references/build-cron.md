@@ -40,7 +40,7 @@ yourself, or put one in a variable, file, remote URL or git config.
    installed, and any test that still fails.
 5. Push the branch, move the item to review/, push factory_board, then
    tell $CONTACT: ID, title, branch link, test result, now in review/.
-6. Format every message as the factory's references/messages.md says
-   for that destination. If one cannot be sent, put it in the summary
+6. Word every message with its template in the factory's
+   references/messages.md. If one cannot be sent, put it in the summary
    and go on.
 ```

@@ -1,82 +1,209 @@
-# Messages to people
+# Messages
 
-How the manager words and formats a message to the contact: a build or review starting or finishing, an install, a failing test, a review asking for fixes, a ship, a run summary. The text is the same everywhere; only the markup changes with where it goes.
+Every message the manager sends, as a Markdown template: to the contact, and as comments on GitHub. Edit the wording here; the manager fills in the placeholders and sends the result as it is.
 
-## Content
+## How to fill them
 
-- One item per message block: the ID and title on the first line, then what happened and what the person should do, in a line or two.
-- Name the item's branch when it has one. Link it on GitHub (`https://github.com/OWNER/REPO/compare/<base>...<branch>`) when the remote is on GitHub.
-- A summary lists one block per item, the ones that need the person first.
+- `{name}` is replaced by its value. A line holding a placeholder with no value is dropped, such as `{link}` when the remote is not on GitHub.
+- A line starting `- ` under a heading such as "for each finding" is repeated, once per item.
+- Send ordinary Markdown. If the contact's tool refuses the markup, send the same text again as plain text.
+- Keep the owner's language: translate the template into the language of the owner's sections in the item.
 - No secrets, tokens, machine paths or long logs. Quote at most one failing test line.
-- Keep the person's language: write in the language of the owner's sections in the item.
 
-## Pick the format from the destination
+Placeholders:
 
-| Destination | Format |
+| Placeholder | Value |
 |---|---|
-| Telegram (`tg:`, a Telegram chat or tool) | Markdown, when the tool renders it (such as mistermorph's `contacts_send`); otherwise Telegram MarkdownV2 |
-| Slack (`slack:`, a Slack channel or tool) | Slack mrkdwn |
-| Anything else: mail, `notify-send`, a log, the run summary | Plain text |
+| `{id}`, `{title}` | the item's ID and title |
+| `{branch}` | the item's branch |
+| `{link}` | the branch on GitHub: `https://github.com/OWNER/REPO/compare/<base>...<branch>` |
+| `{round}` | the fix round number |
+| `{base}` | the base branch |
+| `{folder}` | the folder an item went to |
+| `{run}` | `build`, `review` or `ship` |
+| `{verdict}` | `pass` or `fix` |
+| `{what happened}` | the item's move or result, in a few words |
+| `{sha}` | a short commit hash |
+| `{source}` | the linked GitHub issue or PR, such as `issue #47` |
+| `{reason}` | why, in a sentence |
+| `{test}` | the failing test, one line |
+| `{install}`, `{why}` | what was installed, with which command, and why |
+| `{finding}` | one review finding: `[P1] file:line: what` |
+| `{ref}` | a branch or ref the remote refused |
 
-A tool that renders Markdown for Telegram takes ordinary Markdown: do not add MarkdownV2 escapes, or the backslashes show. A tool that takes a parse mode instead gets MarkdownV2, with the parse mode set to `MarkdownV2`. If the message is refused for its markup, send it once more as plain text.
+## Build run
 
-## Telegram Markdown
+### Build started
 
-For a tool that renders Markdown. Bold `**text**`, italic `_text_`, code `` `text` ``, link `[text](url)`, list items start with `- `. No escaping, except a backslash before a character that would otherwise start markup, such as `\*` for a literal asterisk. No headings or tables: Telegram shows neither.
+```markdown
 
-```
-**FT16** Search box in the toolbar
-Build started on `factory/FT16-search-box`
-```
-
-```
-**FT16** Search box in the toolbar
-Pushed, tests passing. Now in `review/`: [read the branch](https://github.com/OWNER/REPO/compare/master...factory/FT16-search-box)
-```
-
-```
-**FT17** Export as CSV
-Review asks for fixes:
-- [P1] `src/export.go:42`: the header row is written twice.
-```
-
-## Telegram MarkdownV2
-
-For a tool that sends with the parse mode set to `MarkdownV2`.
-
-Bold `*text*`, italic `_text_`, code `` `text` ``, link `[text](url)`. Outside code, escape each of these with a backslash: `_ * [ ] ( ) ~ ` > # + - = | { } . !`. Inside code, escape only `` ` `` and `\`. Inside a link's `(url)`, escape only `)` and `\`.
-
-```
-*FT16* Search box in the toolbar
-Build started on `factory/FT16-search-box`
+**{id}** {title}
+Build started on `{branch}`.
 ```
 
-```
-*FT16* Search box in the toolbar
-Pushed, tests passing\. Now in `review/`: [read the branch](https://github.com/OWNER/REPO/compare/master...factory/FT16-search-box)
-```
+### Fix round started
 
-```
-*FT17* Export as CSV
-Review asks for fixes:
-• \[P1\] `src/export.go:42`: the header row is written twice\.
+```markdown
+**{id}** {title}
+Fix round {round} started on `{branch}`.
 ```
 
-## Slack mrkdwn
+### Installed
 
-Bold `*text*`, italic `_text_`, code `` `text` ``, link `<url|text>`, list items start with `•`. Escape only `&`, `<` and `>` as `&amp;`, `&lt;` and `&gt;`. Slack has no headings or tables.
+For each install:
 
+```markdown
+**{id}** installed `{install}`
+{why}
 ```
-*FT16* Search box in the toolbar
-Pushed, tests passing. Now in `review/`: <https://github.com/OWNER/REPO/compare/master...factory/FT16-search-box|read the branch>
+
+### Install needs sudo
+
+```markdown
+**{id}** needs `{install}`, which needs sudo; not installed.
+{why}
 ```
 
-## Plain text
+### Tests still failing
 
-No markup. Put links as bare URLs on their own line.
-
+```markdown
+**{id}** {title}
+Tests still fail after a retry; going on, the review will see it:
+`{test}`
 ```
-FT16 Search box in the toolbar
-Pushed, tests passing. Now in review/.
-https://github.com/OWNER/REPO/compare/master...factory/FT16-search-box
+
+### Built
+
+```markdown
+**{id}** {title}
+Pushed, tests pass. Now in `review/`.
+[Read the branch]({link})
+```
+
+### Built, tests failing
+
+```markdown
+**{id}** {title}
+Pushed with a failing test. Now in `review/`.
+`{test}`
+[Read the branch]({link})
+```
+
+### Moved to backlog
+
+When the item does not parse, cannot be built at all, or tries to change the factory's rules:
+
+```markdown
+**{id}** {title}
+Moved to `backlog/`: {reason}
+```
+
+## Review run
+
+### Review started
+
+```markdown
+**{id}** {title}
+Review started.
+```
+
+### Conflict resolved
+
+```markdown
+**{id}** {title}
+`{base}` conflicted with the branch; merged and resolved, pushed `{sha}`.
+```
+
+### Installed
+
+As in the build run.
+
+### Passed
+
+```markdown
+**{id}** {title}
+Review passed. Now in `ready/`.
+[Read the branch]({link})
+```
+
+### Needs fixes
+
+For each P0 and P1 finding:
+
+```markdown
+**{id}** {title}
+Review found P0/P1; it stays in `review/` for you to decide.
+- {finding}
+To fix it: add a note and move it to `new/`.
+[Read the branch]({link})
+```
+
+## Ship run
+
+### Merged
+
+```markdown
+**{id}** {title}
+Merged into `{base}` at `{sha}`. Now in `done/`.
+Closed: {source}
+```
+
+### Sent back
+
+```markdown
+**{id}** {title}
+Back in `{folder}` with your note.
+```
+
+### Merge conflict not resolved
+
+```markdown
+**{id}** {title}
+Conflicts with `{base}` the coder could not resolve; still in `ready/`.
+{reason}
+```
+
+### Tests failing on base
+
+```markdown
+Ship stopped: tests fail on the merged `{base}`; nothing pushed, the items stay in `ready/`.
+`{test}`
+```
+
+## Any run
+
+### Run failed
+
+```markdown
+Factory {run} run stopped: {reason}
+```
+
+### Push refused
+
+```markdown
+Factory {run} run stopped: the remote refused `{ref}` ({reason}). Check the GitHub App's permissions and rules.
+```
+
+### Summary
+
+At the end of a run, when anything happened. One line per item, those waiting for you first:
+
+```markdown
+**Factory {run}**
+- **{id}** {title}: {what happened}
+```
+
+## GitHub comments
+
+### Review comment on a linked issue or PR
+
+```markdown
+Factory review of **{id}** on `{branch}` (`{sha}`): **{verdict}**
+- {finding}
+```
+
+### Close comment
+
+```markdown
+Done in **{id}**: merged into `{base}` at `{sha}`.
 ```

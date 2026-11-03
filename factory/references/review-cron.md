@@ -42,7 +42,7 @@ yourself, or put one in a variable, file, remote URL or git config.
    and PRs; with no P0 or P1, move it to ready/. Push factory_board.
 6. Tell $CONTACT: the verdict, and either "in ready/" or the P0 and P1
    findings for you to decide. Mention installs too.
-7. Format every message as the factory's references/messages.md says
-   for that destination. If one cannot be sent, put it in the summary
+7. Word every message with its template in the factory's
+   references/messages.md. If one cannot be sent, put it in the summary
    and go on.
 ```
