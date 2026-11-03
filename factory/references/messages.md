@@ -14,13 +14,35 @@ How the factory and its jobs word and format a notice: a build starting or finis
 
 | Destination | Format |
 |---|---|
-| Telegram (`tg:`, a Telegram chat or tool) | Telegram MarkdownV2 |
+| Telegram (`tg:`, a Telegram chat or tool) | Markdown, when the tool renders it (such as mistermorph's `contacts_send`); otherwise Telegram MarkdownV2 |
 | Slack (`slack:`, a Slack channel or tool) | Slack mrkdwn |
 | Anything else: mail, `notify-send`, a log, the run summary | Plain text |
 
-When a tool takes a parse mode, set it (`MarkdownV2` for Telegram). If the message is refused for its markup, send it once more as plain text.
+A tool that renders Markdown for Telegram takes ordinary Markdown: do not add MarkdownV2 escapes, or the backslashes show. A tool that takes a parse mode instead gets MarkdownV2, with the parse mode set to `MarkdownV2`. If the message is refused for its markup, send it once more as plain text.
+
+## Telegram Markdown
+
+For a tool that renders Markdown. Bold `**text**`, italic `_text_`, code `` `text` ``, link `[text](url)`, list items start with `- `. No escaping, except a backslash before a character that would otherwise start markup, such as `\*` for a literal asterisk. No headings or tables: Telegram shows neither.
+
+```
+**FT16** Search box in the toolbar
+Build started on `factory/FT16-search-box`
+```
+
+```
+**FT16** Search box in the toolbar
+Pushed, tests passing. Now in `review/`: [read the branch](https://github.com/OWNER/REPO/compare/master...factory/FT16-search-box)
+```
+
+```
+**FT17** Export as CSV
+Review asks for fixes:
+- [P1] `src/export.go:42`: the header row is written twice.
+```
 
 ## Telegram MarkdownV2
+
+For a tool that sends with the parse mode set to `MarkdownV2`.
 
 Bold `*text*`, italic `_text_`, code `` `text` ``, link `[text](url)`. Outside code, escape each of these with a backslash: `_ * [ ] ( ) ~ ` > # + - = | { } . !`. Inside code, escape only `` ` `` and `\`. Inside a link's `(url)`, escape only `)` and `\`.
 
