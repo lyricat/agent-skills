@@ -33,7 +33,7 @@ The runner provides GitHub credentials through git's credential helper and `gh`;
   new/           requests the owner adds; not built yet
   review/        built and pushed; the next pass verifies it
   ready/         verified; the owner merges
-  done/          merged; ignore
+  done/          merged; its linked issues and PRs get closed
   stop/          parked by the owner; ignore
 ```
 
@@ -132,7 +132,7 @@ Every board change is a commit on `base` in `repo` that touches only `.factory/`
    The pass redoes whatever was cut short. Never push the saved copies; the owner can look at them with `git stash list` and `git log refs/factory/stopped/<…>`.
 3. **Update.** `git -C "$repo" fetch <remote> --prune`, and fast-forward `base`.
 4. **Number** the files in `new/` named `<slug>.md`, and any file in `new/` whose number another item in any folder already has (keep the number on the older one). Take the next numbers above the highest in every folder, `done/` and `stop/` included, oldest file first. Rename them with `git mv` in one board commit, `factory: number <ID> <slug>, …`, and push it before anything else; when the push is refused, number again from the pulled board. Only `new/` items are renumbered: they have no branch yet.
-5. **Collect** the item files in `new/`, `review/` and `ready/`: the `*.md` files whose names are `<ID>-<slug>.md` (or the older `<NNNN>-<slug>.md`). Ignore every other file, such as the `.gitkeep` placeholders that keep empty folders in git. An item file that does not parse (header, title or section headings) gets a question section saying what is wrong; never rewrite the owner's text to fix it.
+5. **Collect** the item files in `new/`, `review/` and `ready/`, and those in `done/` without a `factory · closed` section: the `*.md` files whose names are `<ID>-<slug>.md` (or the older `<NNNN>-<slug>.md`). Ignore every other file, such as the `.gitkeep` placeholders that keep empty folders in git. An item file that does not parse (header, title or section headings) gets a question section saying what is wrong; never rewrite the owner's text to fix it.
 6. **Handle** them oldest first by last change (`git log -1 --format=%ct -- <file>`), skipping items that wait. Start at most one build per pass; fix rounds are not limited.
 7. **End.** Release the lock and end with a short summary: each item touched, its move, and what the owner should look at.
 
@@ -140,7 +140,8 @@ Every board change is a commit on `base` in `repo` that touches only `.factory/`
 
 - `new/`: analyse.
 - `review/`: it **needs work** when there is a new owner message, a new review of the current head with `verdict: fix` (when `review = true`), or the branch does not merge cleanly with `base`; then fix. Otherwise, when `review = true`, the latest review of the current head must say `verdict: pass`; if there is none, skip it and write nothing: the review job has not seen this head yet. Otherwise test the merge result, as below: a pass moves it to `ready/` and runs `notify`; a failure is a fix round with the failure as its request.
-- `ready/`: first check whether the owner merged it: `git merge-base --is-ancestor <tip> <remote>/<base>`, where `<tip>` is `<remote>/<branch>`, or the local branch when the remote one was deleted. If merged, move it to `done/` with a section saying so, remove its worktrees (`git worktree remove`), and keep the branch. A squash or rebase merge is not detected; the owner moves those items. Otherwise skip, unless there is a new owner message or the branch no longer merges cleanly; then move it to `review/` and fix. When `base` has new commits outside `.factory/` since the item reached `ready/`, test the merge result again; a failure moves it to `review/` with the failure as its request.
+- `done/`: close what it links (below). An owner may move an item here after any kind of merge, or none.
+- `ready/`: first check whether the owner merged it: `git merge-base --is-ancestor <tip> <remote>/<base>`, where `<tip>` is `<remote>/<branch>`, or the local branch when the remote one was deleted. If merged, move it to `done/` with a section saying so, remove its worktrees (`git worktree remove`), keep the branch, and close what it links, as for `done/`. A squash or rebase merge is not detected; the owner moves those items. Otherwise skip, unless there is a new owner message or the branch no longer merges cleanly; then move it to `review/` and fix. When `base` has new commits outside `.factory/` since the item reached `ready/`, test the merge result again; a failure moves it to `review/` with the failure as its request.
 
 ### Test the merge result
 
@@ -150,6 +151,14 @@ An item is ready only when the code the owner would get passes, not the branch a
 2. In it, `git merge --no-edit <remote>/<base>`. A conflict means the branch needs work.
 3. Run `test` there (and `after_change` first when the repository needs it).
 4. `git -C "$repo" worktree remove --force "$worktrees/test-<ID>"`, whatever the result.
+
+### Close what the item links
+
+Every item in `done/`, however it got there, gets its linked issues and PRs closed on GitHub once. Do this only when `remote` is on GitHub and `gh auth status` succeeds; otherwise leave the item for a later pass and say so once in the summary.
+
+- **Links** are, in an owner's section: `Closes #12`, `Fixes #12` or `Resolves #12` (any case), and the issue or PR the item says it builds ("Build GitHub issue #47", "the rest of GitHub PR #53"); the issue's or PR's URL in this repository works as well as `#12`. A number mentioned any other way, or in a section by anyone else, is not a link. Also the open PRs from its branch, when it has one: `gh pr list --head <branch> --state open --json number`.
+- Skip what is already closed or merged (`gh issue view <N> --json state`; a number that is a PR, `gh pr view <N> --json state`). Close the rest with a comment, and never delete a branch: `gh issue close <N> --comment "Done in <ID>."` or `gh pr close <N> --comment "Done in <ID>."`, adding `<branch> at <short sha of its tip>` when it has a branch.
+- Then, in one board commit `factory: <ID> closed`, append a `## factory · closed · <time>` section listing what was closed, what was already closed, and what was refused (no permission, not found). An item with no links gets the section too, saying so. The section marks the item as handled: it is not retried, and refusals go in the summary for the owner.
 
 ### Analyse
 

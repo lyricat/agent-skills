@@ -350,7 +350,7 @@ Round 1: the cache stays (icons.go:90).</span></pre>
       <li><strong>Build and fix.</strong> Claude Code commits the code on that branch, and every fix round adds commits to the same branch. The agent pushes it; it never force-pushes or rewrites it.</li>
       <li><strong>Keeping up.</strong> When <code>master</code> moves on and the branch no longer merges cleanly, the agent merges <code>master</code> into the branch and runs the tests again. It doesn't rebase, so what you already reviewed keeps its commits.</li>
       <li><strong>Board on master.</strong> The agent's commits on <code>master</code> only move files and add sections under <code>.factory/</code>. It never puts code on <code>master</code>.</li>
-      <li><strong>Finish.</strong> You merge the branch into <code>master</code>. For a file in <code>ready/</code>, the next pass sees the merge and moves it to <code>done/</code>; otherwise, or after a squash or rebase merge, move it yourself. Deleting the branch is yours too; the agent never deletes a branch.</li>
+      <li><strong>Finish.</strong> You merge the branch into <code>master</code>. For a file in <code>ready/</code>, the next pass sees the merge and moves it to <code>done/</code>; otherwise, or after a squash or rebase merge, move it yourself. However a file reaches <code>done/</code>, the next pass where <code>gh</code> works closes what it links: the issues and PRs your sections name with <code>Closes #12</code>, <code>Fixes #12</code> or <code>Resolves #12</code>, the issue or PR the item builds, and the branch's open PRs. It notes what it closed in a last section, once. Deleting the branch is yours too; the agent never deletes a branch.</li>
     </ul>
   </section>
 

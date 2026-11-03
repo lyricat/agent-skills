@@ -16,7 +16,7 @@ Install the App on the factory's repository only ("Only select repositories"), n
 Leave every other permission at "No access". In particular:
 
 - **Workflows**: no access. GitHub then refuses any push that changes `.github/workflows/`, which enforces that `never` entry on the server.
-- **Pull requests**, **Issues**: no access. The factory opens no PRs and writes no issues; the board is files.
+- **Pull requests**, **Issues**: no access, unless the factory should close what a merged item links. The factory opens no PRs and writes no issues; the board is files. To have it close linked issues and PRs when an item moves to `done/`, give both Read and write. Without them the close is refused, and the item still moves.
 - **Administration**, **Secrets**, **Actions**, **Environments**: no access.
 
 Add a permission only when a repository setting needs it, such as a `notify` command that comments on an issue (Issues: write).
