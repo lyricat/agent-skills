@@ -34,23 +34,48 @@ The job runs in its own clone, never in someone's working copy.
 REPO=OWNER/REPO
 CONTACT=<who to tell, and how: tg:@name, slack:#channel, or anything else>
 
-Review the factory items in review/ of $REPO (this git repository is a
-clone of it). Review only: never edit code, merge,
-push branches, or move item files.
+Review the factory items in review/ of $REPO, in this repository (a clone
+used only by this job). Review only: never edit code, merge, push
+branches, or move item files.
 
-Use $review-code, run through $coder with Codex.
+If git has no credential helper here (for example with a GitHub App gh
+wrapper), run every fetch, pull and push with gh as the helper, for that
+command only:
+  GH_REPO=$REPO git -c credential.helper= \
+    -c 'credential.helper=!gh auth git-credential' push origin <base>
+Never ask gh for a token, or put one in a variable, file, remote URL or
+git config.
 
-1. git pull. For each .factory/review/*.md, take `branch` from its header
+1. Lock: mkdir "${XDG_RUNTIME_DIR:-/tmp}/factory-review-<repo name>.lock".
+   If it exists and was touched in the last 10 minutes, another run is
+   reviewing: stop. If older, take it over. Touch it before and after
+   each review; remove it when the run ends, also on failure.
+2. Recover what a stopped run left, and say so in the summary: abort an
+   unfinished rebase or merge; go back to base; stash uncommitted changes
+   as "review: left by a stopped run <time>"; remove leftover
+   ~/.factory/$REPO/review-* worktrees (git worktree remove --force, then
+   git worktree prune). Local commits on base that are not on
+   origin/<base>: save them as refs/factory/stopped/<YYYYMMDD-HHMM>, then
+   reset base to origin/<base> after the pull below.
+3. git pull. For each .factory/review/*.md, take `branch` from its header
    and its head: git rev-parse origin/<branch>.
-2. Skip the item if its file already has a review section whose
-   `head:` is that commit. A new head (after a fix round) is reviewed again.
-3. Check the branch out in a temporary worktree, so the reviewer reads
+   Skip the item when:
+   - its file already has a review section whose `head:` is that commit
+     (a new head, after a fix round, is reviewed again); or
+   - it waits: its last factory section is a question, with no section
+     from a name in factory.toml's owners after it.
+4. Check the branch out in a temporary worktree, so the reviewer reads
    the branch's files, not base's:
      git worktree add --detach ~/.factory/$REPO/review-<ID> origin/<branch>
-   Review there, origin/<base>...origin/<branch>, against the item's
-   request and plan (base is in .factory/factory.toml). Then remove it:
+5. Review there with $review-code, run through $coder with Codex:
+   origin/<base>...origin/<branch> against the item's request and plan
+   (base is in .factory/factory.toml).
+   In the task you give Codex, say plainly that it only reads and
+   reports: it changes no files, makes no commits, and never pushes,
+   fetches or runs gh.
+   Then remove the worktree:
      git worktree remove --force ~/.factory/$REPO/review-<ID>
-4. Append one section at the end of the item file, signed with
+6. Append one section at the end of the item file, signed with
    `git config user.name`, time in factory.toml's timezone:
 
    ## <name> · review · <YYYY-MM-DD HH:MM>
@@ -63,13 +88,16 @@ Use $review-code, run through $coder with Codex.
 
    verdict is fix when there is any P0 or P1 finding; only those go under
    fix:. Leave out empty lists. Never edit earlier sections.
-5. Commit only that file ("review: FT16 pass" or "review: FT16 fix"),
+7. Commit only that file ("review: FT16 pass" or "review: FT16 fix"),
    git pull --rebase, push to base. Never commit anything outside
    .factory/. If the push is refused three times, stop and say so.
-6. If any verdict is fix, tell $CONTACT: each item's ID, title and its
-   P0/P1 findings.
-7. Format every message to $CONTACT as the factory's references/messages.md
-   says for that destination (Telegram, Slack, or plain text).
+8. Messages:
+   Before each review, tell $CONTACT that it starts (ID and title).
+   After writing it, tell $CONTACT the verdict: pass, or fix with its
+   P0/P1 findings. If a message cannot be sent, note it for the summary
+   and go on. Format every message as the factory's
+   references/messages.md says for that destination (Telegram, Slack, or
+   plain text).
 ```
 
 To run it without a clone, through the GitHub API, see `review-cron.gh.md`.

@@ -38,28 +38,40 @@ Review the factory items in review/ of $REPO, using gh only (no local
 clone of the project). Review only: never edit code, merge, push branches,
 or move item files.
 
-Use $review-code, run through $coder with Codex.
-
 Anything that talks to GitHub goes through gh (gh api, gh repo clone,
 gh auth status), never plain git or curl against github.com.
 
-Let R=repos/$REPO. Read .factory/factory.toml for base and timezone:
+Let R=repos/$REPO. Read .factory/factory.toml for base, owners and
+timezone:
   gh api "$R/contents/.factory/factory.toml" --jq .content | base64 -d
 
-1. List the items:
+1. Lock: mkdir "${XDG_RUNTIME_DIR:-/tmp}/factory-review-<repo name>.lock".
+   If it exists and was touched in the last 10 minutes, another run is
+   reviewing: stop. If older, take it over. Then delete any leftover
+   ~/.factory/$REPO/review-* directories from a stopped run. Touch the
+   lock before and after each review; remove it when the run ends, also
+   on failure.
+2. List the items:
      gh api "$R/contents/.factory/review?ref=<base>" --jq '.[] | select(.name|endswith(".md")) | .path'
    For each, read the file and keep its blob sha:
      gh api "$R/contents/<path>?ref=<base>" --jq '.sha, .content'
    Take `branch` from its header and the branch head:
      gh api "$R/branches/<branch>" --jq .commit.sha
-2. Skip the item if its file already has a review section whose `head:`
-   is that commit. A new head (after a fix round) is reviewed again.
-3. Review the change against the item's request and plan. Give the
-   reviewer the diff and a throwaway checkout for context:
-     gh api -H "Accept: application/vnd.github.diff" "$R/compare/<base>...<head>"
+   Skip the item when:
+   - its file already has a review section whose `head:` is that commit
+     (a new head, after a fix round, is reviewed again); or
+   - it waits: its last factory section is a question, with no section
+     from a name in factory.toml's owners after it.
+3. Make a throwaway checkout of the branch for context:
      gh repo clone "$REPO" ~/.factory/$REPO/review-<ID> -- --depth 50 --branch <branch> --single-branch
-   Delete that directory afterwards.
-4. Append one section at the end of the item file, signed with
+4. Review there with $review-code, run through $coder with Codex, against
+   the item's request and plan. Give it the diff too:
+     gh api -H "Accept: application/vnd.github.diff" "$R/compare/<base>...<head>"
+   In the task you give Codex, say plainly that it only reads and
+   reports: it changes no files, makes no commits, and never pushes,
+   fetches or runs gh.
+   Then delete the checkout.
+5. Append one section at the end of the item file, signed with
    `git config user.name`, time in factory.toml's timezone:
 
    ## <name> · review · <YYYY-MM-DD HH:MM>
@@ -72,7 +84,7 @@ Let R=repos/$REPO. Read .factory/factory.toml for base and timezone:
 
    verdict is fix when there is any P0 or P1 finding; only those go under
    fix:. Leave out empty lists. Never edit earlier sections.
-5. Write the whole file back to base in one commit, passing the blob sha
+6. Write the whole file back to base in one commit, passing the blob sha
    you read:
      gh api -X PUT "$R/contents/<path>" -f branch=<base> \
        -f message="review: FT16 pass" -f sha=<blob sha> \
@@ -80,10 +92,13 @@ Let R=repos/$REPO. Read .factory/factory.toml for base and timezone:
    A 409 or 422 means the file changed meanwhile: read it again, append
    your section to the new text, and retry, at most three times; then
    stop and say so. A 404 means the item left review/: skip it.
-6. If any verdict is fix, tell $CONTACT: each item's ID, title and its
-   P0/P1 findings.
-7. Format every message to $CONTACT as the factory's references/messages.md
-   says for that destination (Telegram, Slack, or plain text).
+7. Messages:
+   Before each review, tell $CONTACT that it starts (ID and title).
+   After writing it, tell $CONTACT the verdict: pass, or fix with its
+   P0/P1 findings. If a message cannot be sent, note it for the summary
+   and go on. Format every message as the factory's
+   references/messages.md says for that destination (Telegram, Slack, or
+   plain text).
 ```
 
 The blob `sha` does the job of `git pull --rebase`: if the factory changed the file in between, the write is refused instead of overwriting it.
