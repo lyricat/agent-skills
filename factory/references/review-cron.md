@@ -48,7 +48,8 @@ command only:
 Never ask gh for a token, or put one in a variable, file, remote URL or
 git config.
 
-1. Lock: mkdir "${XDG_RUNTIME_DIR:-/tmp}/factory-review-<repo name>.lock".
+1. Lock: mkdir -p ~/.factory/$REPO && mkdir ~/.factory/$REPO/review.lock
+   (one lock per repository, apart from the factory's pass.lock).
    If it exists and was touched in the last 10 minutes, another run is
    reviewing: stop. If older, take it over. Touch it before and after
    each review; remove it when the run ends, also on failure.

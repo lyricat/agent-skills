@@ -12,7 +12,7 @@ One run of this skill is one pass over a repository's `.factory/` board. A pass 
 The scheduled task may give these; otherwise use the defaults:
 
 - `repo`: a clone of the project that belongs to the factory, never the owner's working copy, which may hold uncommitted work. Default: the git repository the task runs in.
-- `worktrees`: a directory outside `repo` for build worktrees. Default: `~/.factory/<OWNER>/<REPO>`, from the GitHub remote's `OWNER/REPO` (another host: `~/.factory/<repo directory name>`), created when missing. Review jobs use the same directory.
+- `worktrees`: a directory outside `repo` for build worktrees. Default: `~/.factory/<OWNER>/<REPO>`, from the GitHub remote's `OWNER/REPO` (another host: `~/.factory/<host>/<path>` from the remote URL, such as `~/.factory/gitlab.com/group/app`), created when missing. Never name it after `repo`'s directory: the sample jobs call every clone `clone`. Review jobs use the same directory.
 
 Stop and say so when `repo` is not a git repository or has no `.factory/factory.toml`. Leftovers in `repo` from a stopped pass are cleared at the start of the next (Each pass, step 2).
 
@@ -123,7 +123,7 @@ Every board change is a commit on `base` in `repo` that touches only `.factory/`
 
 ## Each pass
 
-1. **Lock.** `mkdir "${XDG_RUNTIME_DIR:-/tmp}/factory-<repo dir name>.lock"`. If it exists and was touched in the last 10 minutes, another pass runs: stop. If older, take it over. `touch` it at each step below and just before and after each coding agent call; remove it when the pass ends, also on failure. A coding agent call can outlast the 10 minutes, so a pass also skips an item whose worktree is busy (Build step 1).
+1. **Lock.** `mkdir -p "$worktrees" && mkdir "$worktrees/pass.lock"`: one lock per repository, since `worktrees` is. If it exists and was touched in the last 10 minutes, another pass runs: stop. If older, take it over. `touch` it at each step below and just before and after each coding agent call; remove it when the pass ends, also on failure. A coding agent call can outlast the 10 minutes, so a pass also skips an item whose worktree is busy (Build step 1).
 2. **Recover.** `repo` belongs to the factory, and the lock rules out a running pass, so anything left in it was left by a pass that stopped (killed, timed out, crashed). Clear it, keeping a copy, and say so in the summary:
    - An unfinished rebase or merge: `git rebase --abort` or `git merge --abort`.
    - Not on `base`: `git checkout <base>` (after the next point, if it refuses).

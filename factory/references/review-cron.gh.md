@@ -45,7 +45,8 @@ Let R=repos/$REPO. Read .factory/factory.toml for base, owners and
 timezone:
   gh api "$R/contents/.factory/factory.toml" --jq .content | base64 -d
 
-1. Lock: mkdir "${XDG_RUNTIME_DIR:-/tmp}/factory-review-<repo name>.lock".
+1. Lock: mkdir -p ~/.factory/$REPO && mkdir ~/.factory/$REPO/review.lock
+   (one lock per repository, apart from the factory's pass.lock).
    If it exists and was touched in the last 10 minutes, another run is
    reviewing: stop. If older, take it over. Then delete any leftover
    ~/.factory/$REPO/review-* directories from a stopped run. Touch the
