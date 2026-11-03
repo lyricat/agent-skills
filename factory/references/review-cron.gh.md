@@ -103,4 +103,4 @@ timezone:
 
 The blob `sha` does the job of `git pull --rebase`: if the factory changed the file in between, the write is refused instead of overwriting it.
 
-To run it in a clone of the repository instead, see `review-cron.md`.
+To run it in a clone it keeps (`~/.factory/OWNER/REPO/clone-review`) instead, see `review-cron.md`.

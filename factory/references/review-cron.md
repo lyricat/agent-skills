@@ -1,6 +1,6 @@
 # Sample prompt: a review job beside the factory
 
-A scheduled job, run in a clone of the repository, that reviews the items in `.factory/review/` and records each review in the item file. It only reviews: it never edits code, merges, pushes branches or moves item files.
+A scheduled job, run in its own clone of the repository, that reviews the items in `.factory/review/` and records each review in the item file. It only reviews: it never edits code, merges, pushes branches or moves item files.
 
 Before using it:
 
@@ -28,14 +28,16 @@ Only P0 and P1 findings block (`verdict: fix`); P2 and P3 go under `notes:`.
 
 ## The prompt
 
-The job runs in its own clone, never in someone's working copy.
+The job runs in its own clone, `~/.factory/OWNER/REPO/clone-review`, never in someone's working copy, and makes it with `gh repo clone` the first time. It is not the coder job's `clone` next to it: the recovery step below would clear what a pass left there. The name does not start with `review-`, so that step's cleanup of `review-*` worktrees leaves it alone.
 
 ```
 REPO=OWNER/REPO
 CONTACT=<who to tell, and how: tg:@name, slack:#channel, or anything else>
 
-Review the factory items in review/ of $REPO, in this repository (a clone
-used only by this job). Review only: never edit code, merge, push
+Review the factory items in review/ of $REPO, in
+~/.factory/$REPO/clone-review (a clone used only by this job). If it does
+not exist, gh repo clone "$REPO" ~/.factory/$REPO/clone-review. Never use
+anyone's working copy. Review only: never edit code, merge, push
 branches, or move item files.
 
 If git has no credential helper here (for example with a GitHub App gh

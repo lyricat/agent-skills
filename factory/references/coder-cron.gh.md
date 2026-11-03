@@ -2,7 +2,7 @@
 
 A scheduled job that, using `gh` for access, runs one factory pass with Codex as the coding agent. A pass numbers new items, asks when a request is unclear, builds at most one clear item and moves it to `review/`. It also makes fix rounds from review notes, moves reviewed items to `ready/` and merged ones to `done/`.
 
-Building needs a git checkout, so the job keeps its own clone in the directory it runs in, made with `gh repo clone` the first time. Git has no stored login: each fetch, pull and push uses `gh auth git-credential` as its credential helper, for that command only, so `gh` mints a fresh token each time and the job never sees it.
+Building needs a git checkout, so the job keeps its own clone in `~/.factory/OWNER/REPO/clone`, next to the build worktrees, made with `gh repo clone` the first time. Git has no stored login: each fetch, pull and push uses `gh auth git-credential` as its credential helper, for that command only, so `gh` mints a fresh token each time and the job never sees it.
 
 Run the whole pass, not only `new/`: the fix rounds that a review job's `verdict: fix` asks for happen here too (see `review-cron.gh.md`).
 
@@ -31,10 +31,12 @@ only, as the factory's Access rules show:
 gh mints the token and hands it to git; never ask gh for a token
 yourself, or put one in a variable, file, remote URL or git config.
 
-1. gh auth status must succeed; if not, stop and say so. If ./<repo name>
-   does not exist, gh repo clone "$REPO" it. Never use anyone's working
-   copy.
-2. Run one factory pass on $REPO with $factory, with repo: ./<repo name>.
+1. gh auth status must succeed; if not, stop and say so. If
+   ~/.factory/$REPO/clone does not exist,
+   gh repo clone "$REPO" ~/.factory/$REPO/clone. Never use anyone's
+   working copy.
+2. Run one factory pass on $REPO with $factory, with
+   repo: ~/.factory/$REPO/clone.
 3. For every build and fix round, use $coder with Codex as the coding
    agent. In the task you give Codex, say plainly that it must commit
    its work on the branch but never push, fetch or run gh; only the
@@ -54,4 +56,4 @@ yourself, or put one in a variable, file, remote URL or git config.
    says for that destination (Telegram, Slack, or plain text).
 ```
 
-To run it in a clone the scheduler already keeps, see `coder-cron.md`.
+When git already has a credential helper for the repository, see `coder-cron.md`.
