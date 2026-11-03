@@ -45,7 +45,7 @@ The coder gets no push rights: its task tells it not to push, fetch or run `gh`,
 
 ## The board
 
-The board is the `.factory/` folder on the branch `factory_board`: an orphan branch that holds nothing else, shares no history with the code and is never merged. The remote is `origin` unless the task names another.
+The board is the `.factory/` folder on the branch `factory_board`: an orphan branch that shares no history with the code and is never merged. Besides `.factory/` it may hold the owner's Pages workflow (`references/board-pages.yml`) and its copy of `.factory/board.py`; leave both alone. The remote is `origin` unless the task names another.
 
 ```
 .factory/

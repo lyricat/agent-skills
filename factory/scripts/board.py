@@ -4,7 +4,8 @@
     board.py [REPO] [-o board.html]
 
 REPO is a checkout of the factory_board branch, where the board lives; it
-defaults to the current directory. The page has a column per folder
+defaults to the current directory. references/board-pages.yml runs it on
+GitHub Actions to publish the board on GitHub Pages. The page has a column per folder
 (not stop/: parked items are left out; backlog/ is the owner's and waits for nobody), a card per item (whose turn it is,
 its branch, its fix round) and, behind each card, the item's thread and the
 times it moved between folders, read from git. It needs only Python 3.11 and git, and loads nothing from the

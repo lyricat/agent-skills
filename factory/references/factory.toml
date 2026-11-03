@@ -17,6 +17,8 @@
 #
 # To edit the board, keep a second worktree of it beside your clone:
 #   git worktree add ../<repo>-board factory_board
+#
+# To show the board as a web page on GitHub Pages, see board-pages.yml.
 
 # The branch builds start from, and a ship run merges into: the only
 # time the factory pushes to it. The remote is origin.
