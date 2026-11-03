@@ -123,7 +123,7 @@ Every board change is a commit on `base` in `repo` that touches only `.factory/`
 
 ## Each pass
 
-1. **Lock.** `mkdir "${XDG_RUNTIME_DIR:-/tmp}/factory-<repo dir name>.lock"`. If it exists and is younger than three hours, another pass runs: stop. If older, take it over. Remove it when the pass ends, also on failure.
+1. **Lock.** `mkdir "${XDG_RUNTIME_DIR:-/tmp}/factory-<repo dir name>.lock"`. If it exists and was touched in the last 10 minutes, another pass runs: stop. If older, take it over. `touch` it at each step below and just before and after each coding agent call; remove it when the pass ends, also on failure. A coding agent call can outlast the 10 minutes, so a pass also skips an item whose worktree is busy (Build step 1).
 2. **Recover.** `repo` belongs to the factory, and the lock rules out a running pass, so anything left in it was left by a pass that stopped (killed, timed out, crashed). Clear it, keeping a copy, and say so in the summary:
    - An unfinished rebase or merge: `git rebase --abort` or `git merge --abort`.
    - Not on `base`: `git checkout <base>` (after the next point, if it refuses).
@@ -163,7 +163,7 @@ If it is clear, build it.
 
 The item stays in `new/` while it is built; the board changes only when the build is pushed (step 6) or needs a question.
 
-1. Branch and worktree from `<remote>/<base>`: `git -C "$repo" worktree add --no-track -b factory/<ID>-<slug> "$worktrees/factory-<ID>-<slug>" <remote>/<base>` (`--no-track`: the branch must not follow `base`). If the branch exists, locally or on the remote, reuse it and its worktree. When it already has commits beyond `<remote>/<base>`, an earlier pass died during the build: go on from step 5 with a plan for what is there.
+1. If the item's worktree exists and a file in it changed in the last 10 minutes (`find "$worktrees/factory-<ID>-<slug>" -path '*/.git' -prune -o -type f -mmin -10 -print -quit`), another pass is still building it: skip the item. Otherwise branch and worktree from `<remote>/<base>`: `git -C "$repo" worktree add --no-track -b factory/<ID>-<slug> "$worktrees/factory-<ID>-<slug>" <remote>/<base>` (`--no-track`: the branch must not follow `base`). If the branch exists, locally or on the remote, reuse it and its worktree. When it already has commits beyond `<remote>/<base>`, an earlier pass died during the build: go on from step 5 with a plan for what is there.
 2. Write the plan; it goes into the item with the build's report. Write it as: **Behaviour** (step by step, including empty, error and first-run cases), **Scope** (what changes, and what is left out on purpose), **Decisions** (details the request did not settle, and why), **Checking** (tests to add; what to check by hand).
 3. Run a coding agent in the worktree (Claude Code: the runner's `coder` tool when it has one, else `claude -p`) with a task that holds the item's title, thread and plan, and these rules, plus `rules`:
    - Implement the plan. Follow the repository's own instructions (`AGENTS.md`, `CLAUDE.md`) and the `read` files.
@@ -176,7 +176,7 @@ The item stays in `new/` while it is built; the board changes only when the buil
 
 ### Fix
 
-1. Reuse the worktree, or make it from `<remote>/<branch>`; then `git pull --ff-only <remote> <branch>`, naming the branch so a wrong upstream can't pull `base`. Never a new branch.
+1. Skip the item if its worktree is busy, as in Build step 1. Otherwise reuse the worktree, or make it from `<remote>/<branch>`; then `git pull --ff-only <remote> <branch>`, naming the branch so a wrong upstream can't pull `base`. Never a new branch.
 2. `round` is the header's plus one. Above `max_rounds`, append a question listing what is left; the item waits in its folder.
 3. If a note is unclear, or two owners disagree, ask as in Analyse instead of guessing.
 4. If the branch conflicts with `base`, merge `<remote>/<base>` into it; never rebase it.
@@ -198,7 +198,7 @@ When a step fails and the case is not here, or it comes back on the next pass, a
 
 | Symptom | Do |
 |---|---|
-| The lock exists and is fresh | Stop; after three hours the next pass takes it over. |
+| The lock exists and is fresh | Stop; once it goes 10 minutes without a touch, the next pass takes it over. |
 | `repo` has uncommitted changes, local commits or an unfinished rebase | A stopped pass left them: recover as in Each pass, step 2, and go on. |
 | `worktree add`: already exists or checked out | `git -C "$repo" worktree prune`, then reuse the worktree at that path. |
 | A worktree holds changes from a stopped run | Read `git status` and `git diff`; commit what belongs to the item, else `git stash`. |
