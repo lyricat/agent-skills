@@ -30,12 +30,15 @@ The runner provides GitHub credentials through git's credential helper and `gh`;
 ```
 .factory/
   factory.toml   settings, written by the owner
-  new/           requests the owner adds; not built yet
+  backlog/       ideas and rough requests the owner keeps; numbered, never built
+  new/           requests the owner wants built; not built yet
   review/        built and pushed; the next pass verifies it
   ready/         verified; the owner merges
   done/          merged; its linked issues and PRs get closed
   stop/          parked by the owner; ignore
 ```
+
+The owner moves an item from `backlog/` to `new/` when it should be built. The factory numbers `backlog/` items, so an item has its ID before it moves and keeps it, but never reads them otherwise: no questions, no builds.
 
 A question never moves an item: it stays in its folder and **waits** (see An item file).
 
@@ -61,7 +64,7 @@ Every notice to a person (`notify`, or a contact named by the task) follows `ref
 
 The number is what identifies an item; the prefix only marks it. Files from before prefixes, `<NNNN>-<slug>.md` with four digits, are item `NNNN` and keep their names and branches. If the owner changes `prefix`, old items keep theirs and new numbers still go above every number in use.
 
-Owners add `new/<slug>.md` without a number, so two people adding items at once cannot pick the same one. The factory numbers items (Each pass, step 4).
+Owners add `backlog/<slug>.md` or `new/<slug>.md` without a number, so two people adding items at once cannot pick the same one. The factory numbers items (Each pass, step 4).
 
 ```markdown
 ---
@@ -131,13 +134,14 @@ Every board change is a commit on `base` in `repo` that touches only `.factory/`
    - Local commits on `base` not on `<remote>/<base>` (a board commit that was never pushed): keep them as `git update-ref refs/factory/stopped/<YYYYMMDD-HHMM> <base>`, then `git reset --hard <remote>/<base>` after the fetch below.
    The pass redoes whatever was cut short. Never push the saved copies; the owner can look at them with `git stash list` and `git log refs/factory/stopped/<…>`.
 3. **Update.** `git -C "$repo" fetch <remote> --prune`, and fast-forward `base`.
-4. **Number** the files in `new/` named `<slug>.md`, and any file in `new/` whose number another item in any folder already has (keep the number on the older one). Take the next numbers above the highest in every folder, `done/` and `stop/` included, oldest file first. Rename them with `git mv` in one board commit, `factory: number <ID> <slug>, …`, and push it before anything else; when the push is refused, number again from the pulled board. Only `new/` items are renumbered: they have no branch yet.
+4. **Number** the files in `backlog/` and `new/` named `<slug>.md`, and any file in either whose number another item in any folder already has (keep the number on the older one). Take the next numbers above the highest in every folder, `done/` and `stop/` included, oldest file first. Rename them with `git mv` in one board commit, `factory: number <ID> <slug>, …`, and push it before anything else; when the push is refused, number again from the pulled board. Only `backlog/` and `new/` items are renumbered: they have no branch yet.
 5. **Collect** the item files in `new/`, `review/` and `ready/`, and those in `done/` without a `factory · closed` section: the `*.md` files whose names are `<ID>-<slug>.md` (or the older `<NNNN>-<slug>.md`). Ignore every other file, such as the `.gitkeep` placeholders that keep empty folders in git. An item file that does not parse (header, title or section headings) gets a question section saying what is wrong; never rewrite the owner's text to fix it.
 6. **Handle** them oldest first by last change (`git log -1 --format=%ct -- <file>`), skipping items that wait. Start at most one build per pass; fix rounds are not limited.
 7. **End.** Release the lock and end with a short summary: each item touched, its move, and what the owner should look at.
 
 ## Per folder
 
+- `backlog/`, `stop/`: ignore, apart from numbering `backlog/` (step 4).
 - `new/`: analyse.
 - `review/`: it **needs work** when there is a new owner message, a new review of the current head with `verdict: fix` (when `review = true`), or the branch does not merge cleanly with `base`; then fix. Otherwise, when `review = true`, the latest review of the current head must say `verdict: pass`; if there is none, skip it and write nothing: the review job has not seen this head yet. Otherwise test the merge result, as below: a pass moves it to `ready/` and runs `notify`; a failure is a fix round with the failure as its request.
 - `done/`: close what it links (below). An owner may move an item here after any kind of merge, or none.
@@ -195,7 +199,7 @@ The item stays in `new/` while it is built; the board changes only when the buil
 ## Never
 
 - Commit to `base` anything outside `.factory/`, merge a `factory/` branch, force-push, or rewrite history others have.
-- Move items out of `done/`, into or out of `stop/`, or into `done/` from anywhere but `ready/`, or before their branch is merged; delete items or branches.
+- Move items out of `done/`, into or out of `backlog/` or `stop/`, or into `done/` from anywhere but `ready/`, or before their branch is merged; delete items or branches.
 - Edit an owner's section, or write to a waiting item.
 - Work in the owner's checkout, or outside `repo` and `worktrees`.
 - Commit secrets, user names from the machine, or absolute paths.

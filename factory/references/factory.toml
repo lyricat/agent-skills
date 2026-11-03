@@ -1,6 +1,6 @@
 # .factory/factory.toml: how the factory works on this repository.
 # Copy it into the repository, set the values, and commit it with empty
-# folders new/ review/ ready/ done/ stop/ (a .gitkeep in each).
+# folders backlog/ new/ review/ ready/ done/ stop/ (a .gitkeep in each).
 
 # The branch you merge into, and the remote the factory pushes to.
 base = "master"

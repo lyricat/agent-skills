@@ -4,7 +4,7 @@
     board.py [REPO] [-o board.html]
 
 REPO defaults to the current directory. The page has a column per folder
-(not stop/: parked items are left out), a card per item (whose turn it is,
+(not stop/: parked items are left out; backlog/ is the owner's and waits for nobody), a card per item (whose turn it is,
 its branch, its fix round) and, behind each card, the item's thread and the
 times it moved between folders, read from git. It needs only Python 3.11 and git, and loads nothing from the
 network. Item files are other people's text: everything is escaped.
@@ -20,9 +20,9 @@ import sys
 import tomllib
 from zoneinfo import ZoneInfo
 
-FOLDERS = ["new", "review", "ready", "done"]  # stop/ is parked: not shown
+FOLDERS = ["backlog", "new", "review", "ready", "done"]  # stop/ is parked: not shown
 # <PREFIX><N>-<slug>.md, or <NNNN>-<slug>.md from before prefixes. Owners add
-# new/<slug>.md; the factory numbers it. Prefixes are capitals and slugs are
+# backlog/<slug>.md or new/<slug>.md; the factory numbers it. Prefixes are capitals and slugs are
 # lower case, so a slug can't be read as a number.
 ITEM = re.compile(r"^(?:(?:[A-Z]+(\d+)|(\d{4}))-)?([a-z0-9]+(?:-[a-z0-9]+)*)\.md$")
 SECTION = re.compile(r"^## (.+?) · (?:(plan|question|review) · )?(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\s*$")
@@ -106,7 +106,7 @@ def moves(repo, path):
 
 def turn(folder, sections, owners):
     """Who acts next: "you", "agent" or "" (nobody)."""
-    if folder == "done":
+    if folder in ("backlog", "done"):
         return ""
     last_factory = max((i for i, s in enumerate(sections) if s["who"] == "factory"), default=-1)
     if any(s["who"] in owners for s in sections[last_factory + 1:]):
@@ -169,7 +169,7 @@ def load(repo):
         for name in sorted(os.listdir(d)):
             m = ITEM.match(name)
             num = m and (m.group(1) or m.group(2))
-            if not m or (num is None and folder != "new"):
+            if not m or (num is None and folder not in ("backlog", "new")):
                 continue
             n = int(num) if num else None
             # A file names its own prefix; older four-digit files take today's.
@@ -207,7 +207,7 @@ h1{font-size:1.6rem;margin:0}
 .meta{color:var(--muted);font-size:.9rem}
 .sum{display:flex;gap:14px;flex-wrap:wrap;font-size:.9rem}
 .sum b{font-family:var(--mono)}
-.board{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.board{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
 .col{display:flex;flex-direction:column;gap:8px;min-width:0}
 .col h2{font:600 .8rem/1 var(--mono);color:var(--muted);margin:0;padding:6px 2px;display:flex;justify-content:space-between}
 .card{display:flex;flex-direction:column;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 12px;color:inherit;text-decoration:none;

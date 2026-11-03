@@ -152,6 +152,7 @@ svg .csub { font-size: 10.5px; fill: var(--muted); }
 ├── src/ …
 └── .factory/
     ├── factory.toml         <span class="c">test command, rules</span>
+    ├── <span class="y">backlog/</span>             <span class="c">ideas you keep; never built</span>
     ├── <span class="y">new/</span>                 <span class="c">you add here; not built yet</span>
     │   └── <span class="y">FT16-search-box.md</span>
     ├── review/              <span class="c">built: read it (or a review job does)</span>
@@ -261,7 +262,7 @@ Round 1: the cache stays (icons.go:90).</span></pre>
   <section aria-labelledby="move-h">
     <span class="kicker">2 · Progress</span>
     <h2 id="move-h">Who moves a file between folders</h2>
-    <p>The factory moves every file except to add, park or resume one. A question never moves a file: it waits where it is until you answer. Orange folders wait for you.</p>
+    <p>The factory moves every file except to add, start, park or resume one. It numbers what you put in <code>backlog/</code> and leaves it alone otherwise: no questions, no builds, until you move the file to <code>new/</code>. A question never moves a file: it waits where it is until you answer. Orange folders wait for you.</p>
     <div class="figure">
       <svg viewBox="0 0 820 280" role="img" aria-label="Folders and who moves files between them">
         <defs>
@@ -273,7 +274,7 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <path class="edge" d="M210 104 L288 104" marker-end="url(#af)"/>
         <text class="elabel" x="249" y="96" text-anchor="middle">built</text>
         <path class="edge" d="M325 128 C 315 172, 375 172, 365 130" marker-end="url(#af)"/>
-        <text class="elabel" x="345" y="188" text-anchor="middle">review note or P0/P1: fix round</text>
+        <text class="elabel" x="385" y="172">review note or P0/P1: fix round</text>
         <path class="edge" d="M400 104 L478 104" marker-end="url(#af)"/>
         <text class="elabel" x="439" y="96" text-anchor="middle">all good</text>
         <path class="edge" d="M520 80 Q 470 36 394 80" marker-end="url(#af)"/>
@@ -282,15 +283,20 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <text class="elabel" x="629" y="96" text-anchor="middle">you merged</text>
         <path class="edge you" d="M20 104 L98 104" marker-end="url(#ay)"/>
         <text class="elabel" x="58" y="96" text-anchor="middle">you add</text>
+        <path class="edge you" d="M20 234 L98 234" marker-end="url(#ay)"/>
+        <text class="elabel" x="58" y="226" text-anchor="middle">an idea</text>
         <path class="edge you" d="M135 210 L135 130" marker-end="url(#ay)"/>
-        <text class="elabel" x="143" y="175">resume</text>
-        <path class="edge you" d="M290 234 L212 234" marker-end="url(#ay)"/>
-        <text class="elabel" x="298" y="238">park any file, any time</text>
+        <text class="elabel" x="143" y="175">build it</text>
+        <path class="edge you" d="M310 210 C 300 170, 200 170, 190 130" marker-end="url(#ay)"/>
+        <text class="elabel" x="222" y="204">resume</text>
+        <path class="edge you" d="M480 234 L402 234" marker-end="url(#ay)"/>
+        <text class="elabel" x="488" y="238">park any file, any time</text>
         <g class="dir"><rect x="100" y="80" width="110" height="48"/><text x="155" y="104">new/</text></g>
         <g class="dir waiting"><rect x="290" y="80" width="110" height="48"/><text x="345" y="104">review/</text></g>
         <g class="dir waiting"><rect x="480" y="80" width="110" height="48"/><text x="535" y="104">ready/</text></g>
         <g class="dir"><rect x="670" y="80" width="110" height="48"/><text x="725" y="104">done/</text></g>
-        <g class="dir"><rect x="100" y="210" width="110" height="48"/><text x="155" y="234">stop/</text></g>
+        <g class="dir"><rect x="100" y="210" width="110" height="48"/><text x="155" y="234">backlog/</text></g>
+        <g class="dir"><rect x="290" y="210" width="110" height="48"/><text x="345" y="234">stop/</text></g>
       </svg>
     </div>
   </section>
@@ -383,7 +389,7 @@ FT12-export-csv.md</span></pre></div>
         <span class="t you">09:15</span>
         <div class="body">
           <h3>Add a feature or an issue</h3>
-          <p>A new file in <code>new/</code>, named by a few words; the agent gives it the next ID, so two people adding at once never clash. Write it as you'd tell a colleague.</p>
+          <p>A new file in <code>new/</code>, named by a few words; the agent gives it the next ID, so two people adding at once never clash. Write it as you'd tell a colleague. Not sure yet? Put it in <code>backlog/</code> instead; it gets its ID and waits there, untouched, until you move it to <code>new/</code>.</p>
           <div class="box"><pre><span class="p">$ </span>$EDITOR .factory/new/search-box.md
 <span class="add">  # Search box in the toolbar
 
@@ -440,6 +446,7 @@ FT12-export-csv.md</span></pre></div>
         <tbody>
           <tr><td>See what waits for you</td><td><code>python3 board.py -o board.html</code>: the cards marked <i>you</i></td></tr>
           <tr><td>Add a feature or issue</td><td>a file in <code>.factory/new/</code>, push</td></tr>
+          <tr><td>Keep an idea for later</td><td>a file in <code>.factory/backlog/</code>, push; <code>git mv</code> it to <code>new/</code> when it should be built</td></tr>
           <tr><td>Answer, or ask for a change</td><td>add <code>## yourname · time</code> at the end of its file, push</td></tr>
           <tr><td>Accept a build</td><td>merge its branch, push; from <code>ready/</code> the factory moves the file to <code>done/</code>, from <code>review/</code> you <code>git mv</code> it</td></tr>
           <tr><td>Pause or resume</td><td><code>git mv</code> to <code>stop/</code>, or back to <code>new/</code>, push</td></tr>
@@ -495,6 +502,7 @@ verdict: pass</span></pre>
           <tr><td class="path">src/ … on master</td><td><span class="chip h">human</span></td><td>Changes only by your merges. The agent never commits code to <code>master</code>.</td></tr>
           <tr><td class="path">factory/&lt;ID&gt;-… branches</td><td><span class="chip a">agent</span></td><td>Claude Code writes the code and fix rounds; the agent pushes, and merges <code>master</code> in when needed. You read them and merge them.</td></tr>
           <tr><td class="path">.factory/factory.toml</td><td><span class="chip h">human</span></td><td>You set the test command, what to read first, the paths the agent must not touch.</td></tr>
+          <tr><td class="path">.factory/backlog/</td><td><span class="chip h">human</span></td><td>You keep ideas and rough requests here, and move a file to <code>new/</code> when it should be built. The agent only gives new files their ID.</td></tr>
           <tr><td class="path">.factory/new/</td><td><span class="chip h">human</span></td><td>You create files here. The agent asks its questions in them and moves them on once built; you answer in the file.</td></tr>
           <tr><td class="path">.factory/review/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The agent puts a built item here; you, or the review job, read the branch and write review notes in the file.</td></tr>
           <tr><td class="path">.factory/ready/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The agent puts a finished item here; you merge its branch.</td></tr>
