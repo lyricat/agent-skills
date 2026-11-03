@@ -128,6 +128,33 @@ svg .csub { font-size: 10.5px; fill: var(--muted); }
   .split { grid-template-columns: minmax(0, 1fr); }
   .day > li { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Runs flowchart: who does each step, and where a message goes out. */
+:root { --coder: #0b7782; --coder-soft: #e0f2f3; --msg: #1d7a4c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --coder: #5fcfd8; --coder-soft: #16343a; --msg: #6fd0a0; } }
+:root[data-theme="dark"] { --coder: #5fcfd8; --coder-soft: #16343a; --msg: #6fd0a0; }
+.sw.coder { background: var(--coder); }
+.sw.msg { background: none; width: 16px; height: 14px; }
+.figure.runs svg { min-width: 760px; }
+svg .rhead { font: 600 17px var(--font-display); }
+svg .rsub { font: 500 11px var(--font-mono); fill: var(--muted); }
+svg .st { stroke-width: 1.4; }
+svg .st.m { fill: var(--surface); stroke: var(--accent); }
+svg .st.c { fill: var(--coder-soft); stroke: var(--coder); }
+svg .st.you { fill: var(--you-soft); stroke: var(--you); stroke-dasharray: 5 3; }
+svg .st.d { fill: var(--bg); stroke: var(--muted); }
+svg .st-t { font-size: 12.5px; font-weight: 600; text-anchor: middle; }
+svg .st-n { font-size: 10.5px; fill: var(--muted); text-anchor: middle; }
+svg .flow { fill: none; stroke: var(--muted); stroke-width: 1.4; }
+svg .ah-m { fill: var(--muted); }
+svg .yn { font: 600 10px var(--font-mono); fill: var(--muted); }
+svg .side-t { font-size: 10.5px; fill: var(--muted); }
+svg .msg { fill: var(--msg); }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
+details > summary { cursor: pointer; padding: 12px 16px; font: 600 1rem var(--font-display); list-style-position: inside; }
+details[open] > summary { border-bottom: 1px solid var(--line); }
+details > .inner { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+details .box, details .tablewrap { background: var(--bg); }
 </style>
 </head>
 <body>
@@ -135,16 +162,268 @@ svg .csub { font-size: 10.5px; fill: var(--muted); }
   <header style="display:flex;flex-direction:column;gap:14px">
     <span class="kicker">A software factory on plain files</span>
     <h1>The factory loop</h1>
-    <p class="lede">Git works as it always does: code, branches, merges. Only the tracking changes. Features and issues are text files in a <code>.factory/</code> folder on a branch of their own, <code>factory_board</code>, and the folder a file sits in is its progress.</p>
+    <p class="lede">Features and issues are Markdown files on the <code>factory_board</code> branch; the folder a file sits in is its progress. You add and decide; the agent builds, reviews and ships.</p>
     <div class="legend">
-      <span><i class="sw you"></i>human: you</span>
-      <span><i class="sw fac"></i>agent: the manager, and the coder it runs to write and review code</span>
+      <span><i class="sw you"></i>you</span>
+      <span><i class="sw fac"></i>manager: runs the factory, git and gh</span>
+      <span><i class="sw coder"></i>coder: writes and reviews code</span>
+      <span><svg class="sw msg" viewBox="0 0 18 16" aria-hidden="true"><path fill="var(--msg)" d="M3 1h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H8l-4 3v-3H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/></svg>a message to you</span>
     </div>
   </header>
 
-  <section aria-labelledby="files-h">
-    <span class="kicker">1 · The repo</span>
-    <h2 id="files-h">One repository, one branch more</h2>
+  <section aria-labelledby="move-h">
+    <span class="kicker">1 · The loop</span>
+    <h2 id="move-h">Where an item goes</h2>
+    <div class="figure">
+      <svg viewBox="0 0 820 280" role="img" aria-label="Folders and who moves files between them">
+        <defs>
+          <marker id="af" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-f" d="M0,0 L10,5 L0,10 z"/></marker>
+          <marker id="ay" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-y" d="M0,0 L10,5 L0,10 z"/></marker>
+        </defs>
+        <path class="edge" d="M210 104 L288 104" marker-end="url(#af)"/>
+        <text class="elabel" x="249" y="96" text-anchor="middle">build</text>
+        <path class="edge" d="M400 104 L478 104" marker-end="url(#af)"/>
+        <text class="elabel" x="439" y="96" text-anchor="middle">no P0/P1</text>
+        <path class="edge you" d="M320 80 Q 250 30 180 80" marker-end="url(#ay)"/>
+        <text class="elabel" x="250" y="34" text-anchor="middle">P0/P1: you send it back</text>
+        <path class="edge you" d="M520 80 Q 360 -10 200 82" marker-end="url(#ay)"/>
+        <text class="elabel" x="470" y="22" text-anchor="middle">ship: not ok</text>
+        <path class="edge" d="M590 104 L668 104" marker-end="url(#af)"/>
+        <text class="elabel" x="629" y="96" text-anchor="middle">ship: merged</text>
+        <path class="edge you" d="M20 104 L98 104" marker-end="url(#ay)"/>
+        <text class="elabel" x="58" y="96" text-anchor="middle">you add</text>
+        <path class="edge you" d="M20 234 L98 234" marker-end="url(#ay)"/>
+        <text class="elabel" x="58" y="226" text-anchor="middle">an idea</text>
+        <path class="edge you" d="M125 210 L125 130" marker-end="url(#ay)"/>
+        <text class="elabel" x="117" y="175" text-anchor="end">build it</text>
+        <path class="edge" d="M185 130 L185 208" marker-end="url(#af)"/>
+        <text class="elabel" x="193" y="175">can't be built</text>
+        <path class="edge you" d="M480 234 L402 234" marker-end="url(#ay)"/>
+        <text class="elabel" x="488" y="238">park any file, any time</text>
+        <g class="dir"><rect x="100" y="80" width="110" height="48"/><text x="155" y="104">new/</text></g>
+        <g class="dir waiting"><rect x="290" y="80" width="110" height="48"/><text x="345" y="104">review/</text></g>
+        <g class="dir waiting"><rect x="480" y="80" width="110" height="48"/><text x="535" y="104">ready/</text></g>
+        <g class="dir"><rect x="670" y="80" width="110" height="48"/><text x="725" y="104">done/</text></g>
+        <g class="dir"><rect x="100" y="210" width="110" height="48"/><text x="155" y="234">backlog/</text></g>
+        <g class="dir"><rect x="290" y="210" width="110" height="48"/><text x="345" y="234">stop/</text></g>
+      </svg>
+    </div>
+    <p>Orange folders wait for you: <code>review/</code> only after a P0/P1 review, <code>ready/</code> until you ship.</p>
+  </section>
+
+  <section aria-labelledby="runs-h">
+    <span class="kicker">2 · The runs</span>
+    <h2 id="runs-h">Each run, step by step</h2>
+    <div class="figure runs">
+      <svg viewBox="0 0 968 570" role="img" aria-label="The build, review and ship runs, step by step">
+        <defs>
+          <marker id="rf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="ah-m" d="M0,0 L10,5 L0,10 z"/></marker>
+          <symbol id="msg" viewBox="0 0 18 16"><path style="fill: var(--msg)" d="M3 1h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H8l-4 3v-3H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/></symbol>
+        </defs>
+        <text class="rhead" x="6" y="22">Build</text>
+        <text class="rsub" x="6" y="40">cron · one item from new/</text>
+        <rect class="st you" x="6" y="70" width="196" height="44" rx="4"/>
+        <text class="st-t" x="104.0" y="88">You add an item</text>
+        <text class="st-n" x="104.0" y="103">to new/, or from backlog/</text>
+        <path class="flow" d="M104.0 114 L104.0 130" marker-end="url(#rf)"/>
+        <rect class="st m" x="6" y="132" width="196" height="44" rx="4"/>
+        <text class="st-t" x="104.0" y="150">Take the oldest in new/</text>
+        <text class="st-n" x="104.0" y="165">can&#x27;t be built → backlog/</text>
+        <use href="#msg" x="194" y="124" width="18" height="16"/>
+        <path class="flow" d="M104.0 176 L104.0 192" marker-end="url(#rf)"/>
+        <rect class="st m" x="6" y="194" width="196" height="44" rx="4"/>
+        <text class="st-t" x="104.0" y="212">Worktree on its branch</text>
+        <text class="st-n" x="104.0" y="227">from master, or the PR&#x27;s head</text>
+        <path class="flow" d="M104.0 238 L104.0 254" marker-end="url(#rf)"/>
+        <rect class="st c" x="6" y="256" width="196" height="44" rx="4"/>
+        <text class="st-t" x="104.0" y="274">Merge master, resolve</text>
+        <text class="st-n" x="104.0" y="289">conflicts first, never stop</text>
+        <path class="flow" d="M104.0 300 L104.0 316" marker-end="url(#rf)"/>
+        <rect class="st c" x="6" y="318" width="196" height="44" rx="4"/>
+        <text class="st-t" x="104.0" y="336">Plan · code · install</text>
+        <text class="st-n" x="104.0" y="351">missing deps: user-level, no sudo</text>
+        <use href="#msg" x="194" y="310" width="18" height="16"/>
+        <path class="flow" d="M104.0 362 L104.0 378" marker-end="url(#rf)"/>
+        <polygon class="st d" points="104.0,380 202.0,402.0 104.0,424 6.0,402.0"/>
+        <text class="st-t" x="104.0" y="406.0">Tests pass?</text>
+        <path class="flow side" d="M202 402.0 L220 402.0"/>
+        <text class="yn" x="205" y="414.0">no</text>
+        <text class="side-t" x="226" y="389">fix, retry once;</text>
+        <text class="side-t" x="226" y="402">still failing: tell,</text>
+        <text class="side-t" x="226" y="415">go on</text>
+        <text class="yn" x="110.0" y="437">yes</text>
+        <path class="flow" d="M104.0 424 L104.0 440" marker-end="url(#rf)"/>
+        <rect class="st m" x="6" y="442" width="196" height="44" rx="4"/>
+        <text class="st-t" x="104.0" y="460">Push the branch</text>
+        <text class="st-n" x="104.0" y="475">factory/&lt;ID&gt;-&lt;slug&gt;</text>
+        <path class="flow" d="M104.0 486 L104.0 502" marker-end="url(#rf)"/>
+        <rect class="st m" x="6" y="504" width="196" height="44" rx="4"/>
+        <text class="st-t" x="104.0" y="522">Move to review/</text>
+        <text class="st-n" x="104.0" y="537">push factory_board</text>
+        <use href="#msg" x="194" y="496" width="18" height="16"/>
+        <text class="rhead" x="324" y="22">Review</text>
+        <text class="rsub" x="324" y="40">cron · one item from review/</text>
+        <rect class="st m" x="324" y="70" width="196" height="44" rx="4"/>
+        <text class="st-t" x="422.0" y="88">Take the oldest unreviewed</text>
+        <text class="st-n" x="422.0" y="103">in review/</text>
+        <use href="#msg" x="512" y="62" width="18" height="16"/>
+        <path class="flow" d="M422.0 114 L422.0 130" marker-end="url(#rf)"/>
+        <polygon class="st d" points="422.0,132 520.0,154.0 422.0,176 324.0,154.0"/>
+        <text class="st-t" x="422.0" y="158.0">Conflicts with master?</text>
+        <path class="flow side" d="M520 154.0 L538 154.0"/>
+        <text class="yn" x="523" y="166.0">yes</text>
+        <text class="side-t" x="544" y="141">coder merges,</text>
+        <text class="side-t" x="544" y="154">resolves; push</text>
+        <text class="side-t" x="544" y="167">the branch</text>
+        <text class="yn" x="428.0" y="189">no</text>
+        <path class="flow" d="M422.0 176 L422.0 192" marker-end="url(#rf)"/>
+        <rect class="st c" x="324" y="194" width="196" height="44" rx="4"/>
+        <text class="st-t" x="422.0" y="212">Review the branch</text>
+        <text class="st-n" x="422.0" y="227">review-code · run the tests</text>
+        <path class="flow" d="M422.0 238 L422.0 254" marker-end="url(#rf)"/>
+        <rect class="st c" x="324" y="256" width="196" height="44" rx="4"/>
+        <text class="st-t" x="422.0" y="274">Install what&#x27;s missing</text>
+        <text class="st-n" x="422.0" y="289">user-level, no sudo</text>
+        <use href="#msg" x="512" y="248" width="18" height="16"/>
+        <path class="flow" d="M422.0 300 L422.0 316" marker-end="url(#rf)"/>
+        <rect class="st m" x="324" y="318" width="196" height="44" rx="4"/>
+        <text class="st-t" x="422.0" y="336">Write the review</text>
+        <text class="st-n" x="422.0" y="351">in the item, and on GitHub</text>
+        <path class="flow" d="M422.0 362 L422.0 378" marker-end="url(#rf)"/>
+        <polygon class="st d" points="422.0,380 520.0,402.0 422.0,424 324.0,402.0"/>
+        <text class="st-t" x="422.0" y="406.0">Any P0 or P1?</text>
+        <path class="flow side" d="M520 402.0 L538 402.0"/>
+        <text class="yn" x="523" y="414.0">yes</text>
+        <text class="side-t" x="544" y="389">stays in review/;</text>
+        <text class="side-t" x="544" y="402">you decide</text>
+        <text class="yn" x="428.0" y="437">no</text>
+        <path class="flow" d="M422.0 424 L422.0 440" marker-end="url(#rf)"/>
+        <rect class="st m" x="324" y="442" width="196" height="44" rx="4"/>
+        <text class="st-t" x="422.0" y="460">Move to ready/</text>
+        <text class="st-n" x="422.0" y="475">push factory_board</text>
+        <use href="#msg" x="512" y="434" width="18" height="16"/>
+        <text class="rhead" x="642" y="22">Ship</text>
+        <text class="rsub" x="642" y="40">when you say so</text>
+        <rect class="st you" x="642" y="70" width="196" height="44" rx="4"/>
+        <text class="st-t" x="740.0" y="88">You check ready/</text>
+        <text class="st-n" x="740.0" y="103">“FT12 fine, FT13 back to new”</text>
+        <path class="flow" d="M740.0 114 L740.0 130" marker-end="url(#rf)"/>
+        <rect class="st m" x="642" y="132" width="196" height="44" rx="4"/>
+        <text class="st-t" x="740.0" y="150">Send back the rest</text>
+        <text class="st-n" x="740.0" y="165">to new/ or backlog/, your words</text>
+        <path class="flow" d="M740.0 176 L740.0 192" marker-end="url(#rf)"/>
+        <rect class="st m" x="642" y="194" width="196" height="44" rx="4"/>
+        <text class="st-t" x="740.0" y="212">Merge each fine item</text>
+        <text class="st-n" x="740.0" y="227">into master, one merge commit</text>
+        <path class="flow" d="M740.0 238 L740.0 254" marker-end="url(#rf)"/>
+        <polygon class="st d" points="740.0,256 838.0,278.0 740.0,300 642.0,278.0"/>
+        <text class="st-t" x="740.0" y="282.0">Conflicts?</text>
+        <path class="flow side" d="M838 278.0 L856 278.0"/>
+        <text class="yn" x="841" y="290.0">yes</text>
+        <text class="side-t" x="862" y="265">coder resolves;</text>
+        <text class="side-t" x="862" y="278">can&#x27;t: stays</text>
+        <text class="side-t" x="862" y="291">in ready/</text>
+        <text class="yn" x="746.0" y="313">no</text>
+        <path class="flow" d="M740.0 300 L740.0 316" marker-end="url(#rf)"/>
+        <polygon class="st d" points="740.0,318 838.0,340.0 740.0,362 642.0,340.0"/>
+        <text class="st-t" x="740.0" y="344.0">Master tests pass?</text>
+        <path class="flow side" d="M838 340.0 L856 340.0"/>
+        <text class="yn" x="841" y="352.0">no</text>
+        <text class="side-t" x="862" y="327">coder fixes;</text>
+        <text class="side-t" x="862" y="340">still failing:</text>
+        <text class="side-t" x="862" y="353">push nothing</text>
+        <text class="yn" x="746.0" y="375">yes</text>
+        <path class="flow" d="M740.0 362 L740.0 378" marker-end="url(#rf)"/>
+        <rect class="st m" x="642" y="380" width="196" height="44" rx="4"/>
+        <text class="st-t" x="740.0" y="398">Push master</text>
+        <text class="st-n" x="740.0" y="413">close linked issues and PRs</text>
+        <path class="flow" d="M740.0 424 L740.0 440" marker-end="url(#rf)"/>
+        <rect class="st m" x="642" y="442" width="196" height="44" rx="4"/>
+        <text class="st-t" x="740.0" y="460">Move to done/</text>
+        <text class="st-n" x="740.0" y="475">push factory_board</text>
+        <use href="#msg" x="830" y="434" width="18" height="16"/>
+      </svg>
+
+    </div>
+    <p>Nobody waits for an answer: the coder decides what the request leaves open, and the manager tells you as it goes. A P0/P1 item is fixed when you add a note and move it back to <code>new/</code>.</p>
+  </section>
+
+  <section aria-labelledby="branch-h">
+    <span class="kicker">3 · Branches</span>
+    <h2 id="branch-h">Three kinds of branch</h2>
+    <div class="figure">
+      <svg viewBox="0 0 890 320" role="img" aria-label="Git graph: factory_board, master and the branch factory/FT16-search-box, each commit marked human or agent">
+        <text class="bname" x="20" y="57">factory_</text>
+        <text class="bname" x="20" y="71">board</text>
+        <text class="bname" x="20" y="154">master</text>
+        <text class="bname" x="20" y="264">factory/FT16-</text>
+        <text class="bname" x="20" y="278">search-box</text>
+        <path class="line" d="M110 60 L870 60"/>
+        <path class="line" d="M110 150 L870 150"/>
+        <path class="line" d="M300 150 C 330 150, 330 260, 360 260 L 680 260 C 720 260, 730 150, 770 150"/>
+        <path class="line" d="M520 150 C 545 150, 545 260, 570 260"/>
+        <!-- factory_board -->
+        <circle class="cm h" cx="150" cy="60" r="8"/>
+        <text class="clabel" x="150" y="38" text-anchor="middle">new: FT16</text>
+        <text class="csub" x="150" y="24" text-anchor="middle">you add</text>
+        <circle class="cm a" cx="440" cy="60" r="8"/>
+        <text class="clabel" x="440" y="38" text-anchor="middle">FT16 → review</text>
+        <text class="csub" x="440" y="24" text-anchor="middle">build</text>
+        <circle class="cm a" cx="640" cy="60" r="8"/>
+        <text class="clabel" x="640" y="38" text-anchor="middle">FT16 → ready</text>
+        <text class="csub" x="640" y="24" text-anchor="middle">review: pass</text>
+        <circle class="cm a" cx="845" cy="60" r="8"/>
+        <text class="clabel" x="845" y="38" text-anchor="middle">FT16 → done</text>
+        <text class="csub" x="845" y="24" text-anchor="middle">ship</text>
+        <!-- master -->
+        <circle class="cm a" cx="520" cy="150" r="8"/>
+        <text class="clabel" x="520" y="128" text-anchor="middle">merge FT15</text>
+        <text class="csub" x="520" y="114" text-anchor="middle">an earlier ship</text>
+        <circle class="cm a" cx="770" cy="150" r="8"/>
+        <text class="clabel" x="770" y="128" text-anchor="middle">merge FT16</text>
+        <text class="csub" x="770" y="114" text-anchor="middle">ship: you said fine</text>
+        <!-- branch -->
+        <circle class="cm a" cx="400" cy="260" r="8"/>
+        <text class="clabel" x="400" y="288" text-anchor="middle">search box</text>
+        <text class="csub" x="400" y="303" text-anchor="middle">coder</text>
+        <circle class="cm a" cx="570" cy="260" r="8"/>
+        <text class="clabel" x="570" y="288" text-anchor="middle">merge master</text>
+        <text class="csub" x="570" y="303" text-anchor="middle">conflict resolved</text>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i class="sw you"></i>a commit you make</span>
+      <span><i class="sw fac"></i>a commit the agent makes</span>
+    </div>
+  </section>
+
+  <section aria-labelledby="you-h">
+    <span class="kicker">4 · Your part</span>
+    <h2 id="you-h">Cheat sheet</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>You want to</th><th>Do</th></tr></thead>
+        <tbody>
+          <tr><td>Edit the board</td><td>in the <code>factory_board</code> worktree; pull before, push after</td></tr>
+          <tr><td>See what waits for you</td><td><code>python3 board.py -o board.html</code>: the cards marked <i>decide</i> or <i>check</i></td></tr>
+          <tr><td>Add a feature or issue</td><td>a file in <code>.factory/new/</code>, push</td></tr>
+          <tr><td>Keep an idea for later</td><td>a file in <code>.factory/backlog/</code>, push; <code>git mv</code> it to <code>new/</code> when it should be built</td></tr>
+          <tr><td>Fix after a P0/P1 review</td><td>a note at the end of its file, <code>git mv</code> it to <code>new/</code>, push</td></tr>
+          <tr><td>Accept builds</td><td>tell the manager which <code>ready/</code> items are fine (or all); it merges them</td></tr>
+          <tr><td>Reject a ready build</td><td>tell the manager to send it to <code>new/</code> (with what to change) or <code>backlog/</code></td></tr>
+          <tr><td>Pause or resume</td><td><code>git mv</code> to <code>stop/</code>, or back to <code>new/</code>, push</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box"><div class="vhead">ship: tell the manager</div><pre><span class="y">FT12 is fine. FT13 back to new: keep the cache between syncs.</span>
+<span class="o">FT12 merged into master, tests pass, issue #47 closed, now in done/
+FT13 back in new/ with your note</span></pre></div>
+  </section>
+
+  <section aria-labelledby="ref-h">
+    <span class="kicker">5 · Reference</span>
+    <h2 id="ref-h">The details</h2>
+    <details><summary>The board and its branch</summary><div class="inner">
     <div class="split">
       <div class="box">
         <div class="vhead">branch factory_board</div>
@@ -173,8 +452,8 @@ branches:  master         <span class="c">code</span>
         <li><b><code>factory.toml</code></b><span>What the factory needs to know about this repo: how to test it, what to read first, files it must not touch.</span></li>
       </ul>
     </div>
-
-    <h3>One item file</h3>
+    </div></details>
+    <details><summary>An item file</summary><div class="inner">
     <div class="split">
       <div class="box">
         <div class="vhead">.factory/review/FT13-sync-icons.md</div>
@@ -220,12 +499,33 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <li><b>Your notes</b><span>Write <code>file:line: what to change</code> before you move an item back to <code>new/</code>. The next build fixes it on the same branch and answers each point.</span></li>
       </ul>
     </div>
-  </section>
+    </div></details>
+    <details><summary>A review section</summary><div class="inner">
+    <div class="split">
+      <div class="box">
+        <div class="vhead">.factory/review/FT16-search-box.md</div>
+<pre><span class="f">## factory · 2026-11-04 09:40
+Built on factory/FT16-search-box. Tests pass.</span>
 
-  <section aria-labelledby="config-h">
-    <span class="kicker">Settings</span>
-    <h2 id="config-h">factory.toml</h2>
-    <p>One file in <code>.factory/</code> on <code>factory_board</code> tells the agent how to work on this repository. You write it once and commit it; the agent reads it at the start of every run and never changes it.</p>
+<span class="f">## factory · review · 2026-11-04 10:00
+head: 3f2a1c9e…
+verdict: fix
+fix:
+- [P1] src/toolbar.go:58: Esc clears the list,
+  not the search text.
+notes:
+- [P3] src/toolbar.go:30: the filter runs twice
+  per key.</span></pre>
+      </div>
+      <ul class="notes">
+        <li><b>head</b><span>The commit reviewed. A new commit (a fix round, a merge of <code>master</code>) gets a new review.</span></li>
+        <li><b>verdict: pass</b><span>No P0 or P1: the item moves to <code>ready/</code> in the same run.</span></li>
+        <li><b>verdict: fix</b><span>The item stays in <code>review/</code> and you decide. The next build after you move it to <code>new/</code> fixes the <code>fix:</code> list; <code>notes:</code> are for you.</span></li>
+        <li><b>Tests</b><span>A failing test is a P1 finding, including one the build couldn't fix.</span></li>
+      </ul>
+    </div>
+    </div></details>
+    <details><summary>factory.toml</summary><div class="inner">
     <div class="split">
       <div class="box">
         <div class="vhead">.factory/factory.toml</div>
@@ -255,227 +555,8 @@ Round 1: the cache stays (icons.go:90).</span></pre>
         <li><b>rules</b><span>Extra instructions for the coder in this repository, on top of the general ones: what not to touch on this machine, how to test safely.</span></li>
       </ul>
     </div>
-  </section>
-
-  <section aria-labelledby="move-h">
-    <span class="kicker">2 · Progress</span>
-    <h2 id="move-h">Who moves a file between folders</h2>
-    <p>You put files in <code>backlog/</code> and <code>new/</code>. Two scheduled runs move them on, one item each time: a <b>build</b> takes one from <code>new/</code> to <code>review/</code>, a <b>review</b> takes one from <code>review/</code> to <code>ready/</code>. Nobody waits for an answer on the way: the coder decides what the request leaves open, resolves conflicts, installs what's missing and fixes failing tests, and the manager tells you as it goes. Orange folders wait for you.</p>
-    <div class="figure">
-      <svg viewBox="0 0 820 280" role="img" aria-label="Folders and who moves files between them">
-        <defs>
-          <marker id="af" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-f" d="M0,0 L10,5 L0,10 z"/></marker>
-          <marker id="ay" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-y" d="M0,0 L10,5 L0,10 z"/></marker>
-        </defs>
-        <path class="edge" d="M210 104 L288 104" marker-end="url(#af)"/>
-        <text class="elabel" x="249" y="96" text-anchor="middle">build</text>
-        <path class="edge" d="M400 104 L478 104" marker-end="url(#af)"/>
-        <text class="elabel" x="439" y="96" text-anchor="middle">no P0/P1</text>
-        <path class="edge you" d="M320 80 Q 250 30 180 80" marker-end="url(#ay)"/>
-        <text class="elabel" x="250" y="34" text-anchor="middle">P0/P1: you send it back</text>
-        <path class="edge you" d="M520 80 Q 360 -10 200 82" marker-end="url(#ay)"/>
-        <text class="elabel" x="470" y="22" text-anchor="middle">ship: not ok</text>
-        <path class="edge" d="M590 104 L668 104" marker-end="url(#af)"/>
-        <text class="elabel" x="629" y="96" text-anchor="middle">ship: merged</text>
-        <path class="edge you" d="M20 104 L98 104" marker-end="url(#ay)"/>
-        <text class="elabel" x="58" y="96" text-anchor="middle">you add</text>
-        <path class="edge you" d="M20 234 L98 234" marker-end="url(#ay)"/>
-        <text class="elabel" x="58" y="226" text-anchor="middle">an idea</text>
-        <path class="edge you" d="M125 210 L125 130" marker-end="url(#ay)"/>
-        <text class="elabel" x="117" y="175" text-anchor="end">build it</text>
-        <path class="edge" d="M185 130 L185 208" marker-end="url(#af)"/>
-        <text class="elabel" x="193" y="175">can't be built</text>
-        <path class="edge you" d="M480 234 L402 234" marker-end="url(#ay)"/>
-        <text class="elabel" x="488" y="238">park any file, any time</text>
-        <g class="dir"><rect x="100" y="80" width="110" height="48"/><text x="155" y="104">new/</text></g>
-        <g class="dir waiting"><rect x="290" y="80" width="110" height="48"/><text x="345" y="104">review/</text></g>
-        <g class="dir waiting"><rect x="480" y="80" width="110" height="48"/><text x="535" y="104">ready/</text></g>
-        <g class="dir"><rect x="670" y="80" width="110" height="48"/><text x="725" y="104">done/</text></g>
-        <g class="dir"><rect x="100" y="210" width="110" height="48"/><text x="155" y="234">backlog/</text></g>
-        <g class="dir"><rect x="290" y="210" width="110" height="48"/><text x="345" y="234">stop/</text></g>
-      </svg>
-    </div>
-    <ul class="brules">
-      <li><strong>review/ waits for you</strong> only when a review found P0 or P1. Read the findings; to have it fixed, add a note and <code>git mv</code> it to <code>new/</code>. The next build fixes it on the same branch, and it comes back for another review.</li>
-      <li><strong>ready/ waits for you</strong> until you check it and tell the manager to ship (section 4).</li>
-      <li><strong>backlog/ is yours.</strong> The factory only numbers what's there. A build moves an item back there, with the reason, when it can't be built at all.</li>
-    </ul>
-  </section>
-
-  <section aria-labelledby="branch-h">
-    <span class="kicker">3 · Branches</span>
-    <h2 id="branch-h">How branches work</h2>
-    <p>Three kinds of branch. <code>master</code> holds the code you accepted. <code>factory_board</code> holds the board, and both you and the agent commit there. Each item that gets built has its own branch, <code>factory/&lt;ID&gt;-&lt;words&gt;</code>, where only the agent commits.</p>
-    <div class="figure">
-      <svg viewBox="0 0 890 320" role="img" aria-label="Git graph: factory_board, master and the branch factory/FT16-search-box, each commit marked human or agent">
-        <text class="bname" x="20" y="57">factory_</text>
-        <text class="bname" x="20" y="71">board</text>
-        <text class="bname" x="20" y="154">master</text>
-        <text class="bname" x="20" y="264">factory/FT16-</text>
-        <text class="bname" x="20" y="278">search-box</text>
-        <path class="line" d="M110 60 L870 60"/>
-        <path class="line" d="M110 150 L870 150"/>
-        <path class="line" d="M300 150 C 330 150, 330 260, 360 260 L 680 260 C 720 260, 730 150, 770 150"/>
-        <path class="line" d="M520 150 C 545 150, 545 260, 570 260"/>
-        <!-- factory_board -->
-        <circle class="cm h" cx="150" cy="60" r="8"/>
-        <text class="clabel" x="150" y="38" text-anchor="middle">new: FT16</text>
-        <text class="csub" x="150" y="24" text-anchor="middle">you add</text>
-        <circle class="cm a" cx="440" cy="60" r="8"/>
-        <text class="clabel" x="440" y="38" text-anchor="middle">FT16 → review</text>
-        <text class="csub" x="440" y="24" text-anchor="middle">build</text>
-        <circle class="cm a" cx="640" cy="60" r="8"/>
-        <text class="clabel" x="640" y="38" text-anchor="middle">FT16 → ready</text>
-        <text class="csub" x="640" y="24" text-anchor="middle">review: pass</text>
-        <circle class="cm a" cx="845" cy="60" r="8"/>
-        <text class="clabel" x="845" y="38" text-anchor="middle">FT16 → done</text>
-        <text class="csub" x="845" y="24" text-anchor="middle">ship</text>
-        <!-- master -->
-        <circle class="cm a" cx="520" cy="150" r="8"/>
-        <text class="clabel" x="520" y="128" text-anchor="middle">merge FT15</text>
-        <text class="csub" x="520" y="114" text-anchor="middle">an earlier ship</text>
-        <circle class="cm a" cx="770" cy="150" r="8"/>
-        <text class="clabel" x="770" y="128" text-anchor="middle">merge FT16</text>
-        <text class="csub" x="770" y="114" text-anchor="middle">ship: you said fine</text>
-        <!-- branch -->
-        <circle class="cm a" cx="400" cy="260" r="8"/>
-        <text class="clabel" x="400" y="288" text-anchor="middle">search box</text>
-        <text class="csub" x="400" y="303" text-anchor="middle">coder</text>
-        <circle class="cm a" cx="570" cy="260" r="8"/>
-        <text class="clabel" x="570" y="288" text-anchor="middle">merge master</text>
-        <text class="csub" x="570" y="303" text-anchor="middle">conflict resolved</text>
-      </svg>
-    </div>
-    <div class="legend">
-      <span><i class="sw you"></i>a commit you make</span>
-      <span><i class="sw fac"></i>a commit the agent makes</span>
-    </div>
-    <ul class="brules">
-      <li><strong>Start.</strong> A build branches from the newest <code>master</code>, or, for an item copied from a GitHub PR, from that PR's head. One item, one branch; the ID in the file name is the ID in the branch name.</li>
-      <li><strong>Build and fix.</strong> The coder commits on that branch, and a fix round adds commits to the same branch. The manager pushes it; it never force-pushes or rewrites it.</li>
-      <li><strong>Keeping up.</strong> When the branch conflicts with <code>master</code> (a PR, or <code>master</code> moved on), the coder merges <code>master</code> into it and resolves the conflict before going on. No rebase, so what was reviewed keeps its commits.</li>
-      <li><strong>Board apart.</strong> Board commits go to <code>factory_board</code> and only move files and add sections under <code>.factory/</code>. <code>factory_board</code> is never merged anywhere.</li>
-      <li><strong>Ship.</strong> Only when you say so, the manager merges the items you called fine into <code>master</code>, one merge commit each; the coder resolves any conflict. It runs the tests on the result, pushes <code>master</code>, closes the linked GitHub issues and PRs with a comment, and moves the items to <code>done/</code>. It never deletes a branch.</li>
-    </ul>
-  </section>
-
-  <section aria-labelledby="day-h">
-    <span class="kicker">4 · Daily use</span>
-    <h2 id="day-h">A day with the factory</h2>
-    <p>The board in a worktree beside your clone, <code>sample-board/</code>. The build and review runs go by themselves every 30 minutes; messages reach you in your chat.</p>
-    <ol class="day">
-      <li>
-        <span class="t you">09:00</span>
-        <div class="body">
-          <h3>Check what's ready</h3>
-          <div class="box"><pre><span class="p">$ </span>cd sample-board && git pull
-<span class="p">$ </span>python3 board.py -o board.html     <span class="c"># or: ls .factory/ready</span>
-<span class="o">.factory/ready:
-FT12-export-csv.md  FT13-sync-icons.md</span></pre></div>
-          <p>Read each branch (the link is in the item and in the message you got). Then tell the manager:</p>
-          <div class="box"><pre><span class="y">ship: FT12 is fine. FT13 back to new: keep the cache between syncs.</span>
-<span class="o">FT12 merged into master, tests pass, issue #47 closed, now in done/
-FT13 back in new/ with your note</span></pre></div>
-          <p>Or just: <i>all ready items are fine</i>.</p>
-        </div>
-      </li>
-      <li>
-        <span class="t you">09:15</span>
-        <div class="body">
-          <h3>Add a feature or an issue</h3>
-          <p>A file in <code>new/</code> when it's clear, in <code>backlog/</code> when it isn't yet; the agent gives it the next ID. From GitHub, name the issue or PR in your section: the item then builds on a PR's branch, and the issue or PR gets the review and is closed on ship.</p>
-          <div class="box"><pre><span class="p">$ </span>$EDITOR .factory/new/search-box.md
-<span class="add">  # Search box in the toolbar
-
-  ## alex · 2026-11-04 09:15
-  Copied from GitHub issue #51. Filter the list as I type; Esc clears it.</span>
-<span class="p">$ </span>git add .factory && git commit -m "new: search box" && git push</pre></div>
-        </div>
-      </li>
-      <li>
-        <span class="t fac">09:30</span>
-        <div class="body">
-          <h3>A build runs</h3>
-          <p>One item from <code>new/</code>: a plan, the code on its branch, tests, the branch pushed, the file moved to <code>review/</code>. You hear when it starts, what it installed, any test it couldn't fix, and when it's done.</p>
-          <div class="box"><pre><span class="o">FT16 Search box in the toolbar: build started
-FT16 installed golangci-lint (go install), for the lint test
-FT16 pushed, tests pass, now in review/</span></pre></div>
-        </div>
-      </li>
-      <li>
-        <span class="t fac">10:00</span>
-        <div class="body">
-          <h3>A review runs</h3>
-          <p>One item from <code>review/</code>. Without P0 or P1 it moves to <code>ready/</code>; with them it stays, and you decide.</p>
-          <div class="box"><pre><span class="o">FT16 review started
-FT16 review: fix
-- [P1] src/toolbar.go:58: Esc clears the list, not the search text.</span></pre></div>
-        </div>
-      </li>
-      <li>
-        <span class="t you">10:15</span>
-        <div class="body">
-          <h3>Send it back to be fixed</h3>
-          <p>Add a note if you like, and move the file to <code>new/</code>. The next build fixes it on the same branch, from your note and the review's P0 and P1 list.</p>
-          <div class="box"><pre><span class="p">$ </span>git pull && git mv .factory/review/FT16-search-box.md .factory/new/
-<span class="p">$ </span>$EDITOR .factory/new/FT16-search-box.md
-<span class="add">  ## alex · 2026-11-04 10:15
-  Fix the P1; keep the text when the list reloads too.</span>
-<span class="p">$ </span>git add .factory && git commit -m "FT16 back to new" && git push</pre></div>
-        </div>
-      </li>
-    </ol>
-
-    <h3>Cheat sheet</h3>
-    <div class="tablewrap">
-      <table>
-        <thead><tr><th>You want to</th><th>Do</th></tr></thead>
-        <tbody>
-          <tr><td>Edit the board</td><td>in the <code>factory_board</code> worktree; pull before, push after</td></tr>
-          <tr><td>See what waits for you</td><td><code>python3 board.py -o board.html</code>: the cards marked <i>decide</i> or <i>check</i></td></tr>
-          <tr><td>Add a feature or issue</td><td>a file in <code>.factory/new/</code>, push</td></tr>
-          <tr><td>Keep an idea for later</td><td>a file in <code>.factory/backlog/</code>, push; <code>git mv</code> it to <code>new/</code> when it should be built</td></tr>
-          <tr><td>Fix after a P0/P1 review</td><td>a note at the end of its file, <code>git mv</code> it to <code>new/</code>, push</td></tr>
-          <tr><td>Accept builds</td><td>tell the manager which <code>ready/</code> items are fine (or all); it merges them</td></tr>
-          <tr><td>Reject a ready build</td><td>tell the manager to send it to <code>new/</code> (with what to change) or <code>backlog/</code></td></tr>
-          <tr><td>Pause or resume</td><td><code>git mv</code> to <code>stop/</code>, or back to <code>new/</code>, push</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section aria-labelledby="gate-h">
-    <span class="kicker">5 · Reviews</span>
-    <h2 id="gate-h">What a review writes</h2>
-    <p>The review run has the coder review the branch against the request and plan, and run the tests. The manager writes the result into the item and comments it on the linked GitHub issue or PR. Sample prompts for the two scheduled runs are in <code>build-cron.md</code> and <code>review-cron.md</code>.</p>
-    <div class="split">
-      <div class="box">
-        <div class="vhead">.factory/review/FT16-search-box.md</div>
-<pre><span class="f">## factory · 2026-11-04 09:40
-Built on factory/FT16-search-box. Tests pass.</span>
-
-<span class="f">## factory · review · 2026-11-04 10:00
-head: 3f2a1c9e…
-verdict: fix
-fix:
-- [P1] src/toolbar.go:58: Esc clears the list,
-  not the search text.
-notes:
-- [P3] src/toolbar.go:30: the filter runs twice
-  per key.</span></pre>
-      </div>
-      <ul class="notes">
-        <li><b>head</b><span>The commit reviewed. A new commit (a fix round, a merge of <code>master</code>) gets a new review.</span></li>
-        <li><b>verdict: pass</b><span>No P0 or P1: the item moves to <code>ready/</code> in the same run.</span></li>
-        <li><b>verdict: fix</b><span>The item stays in <code>review/</code> and you decide. The next build after you move it to <code>new/</code> fixes the <code>fix:</code> list; <code>notes:</code> are for you.</span></li>
-        <li><b>Tests</b><span>A failing test is a P1 finding, including one the build couldn't fix.</span></li>
-      </ul>
-    </div>
-  </section>
-
-  <section aria-labelledby="rules-h">
-    <span class="kicker">6 · Who touches what</span>
-    <h2 id="rules-h">Every path, human or agent</h2>
+    </div></details>
+    <details><summary>Who touches what</summary><div class="inner">
     <div class="tablewrap">
       <table>
         <thead><tr><th>Path</th><th>Who</th><th>What they do there</th></tr></thead>
@@ -496,7 +577,7 @@ notes:
         </tbody>
       </table>
     </div>
-    <p>If you and a run push the board at the same moment, one push is refused; that side pulls and pushes again. Board commits live on <code>factory_board</code>, so <code>master</code>'s history holds only code and ship merges.</p>
+    </div></details>
   </section>
 </main>
 </body>
