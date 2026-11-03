@@ -3,7 +3,8 @@
 
     board.py [REPO] [-o board.html]
 
-REPO defaults to the current directory. The page has a column per folder
+REPO is a checkout of the factory_board branch, where the board lives; it
+defaults to the current directory. The page has a column per folder
 (not stop/: parked items are left out; backlog/ is the owner's and waits for nobody), a card per item (whose turn it is,
 its branch, its fix round) and, behind each card, the item's thread and the
 times it moved between folders, read from git. It needs only Python 3.11 and git, and loads nothing from the
@@ -335,11 +336,11 @@ def render(cfg, name, items):
 
 def main():
     ap = argparse.ArgumentParser(description="Render a .factory/ board as one HTML page.")
-    ap.add_argument("repo", nargs="?", default=".", help="the repository (default: the current directory)")
+    ap.add_argument("repo", nargs="?", default=".", help="a checkout of factory_board (default: the current directory)")
     ap.add_argument("-o", "--out", help="write here instead of to standard output")
     a = ap.parse_args()
     if not os.path.isfile(os.path.join(a.repo, ".factory", "factory.toml")):
-        sys.exit(f"board.py: {a.repo} has no .factory/factory.toml")
+        sys.exit(f"board.py: {a.repo} has no .factory/factory.toml; give a checkout of factory_board")
     page = render(*load(a.repo))
     if a.out:
         with open(a.out, "w", encoding="utf-8") as f:

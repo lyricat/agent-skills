@@ -135,7 +135,7 @@ svg .csub { font-size: 10.5px; fill: var(--muted); }
   <header style="display:flex;flex-direction:column;gap:14px">
     <span class="kicker">A software factory on plain files</span>
     <h1>The factory loop</h1>
-    <p class="lede">Git works as it always does: code, branches, merges. Only the tracking changes. Features and issues are text files in a <code>.factory/</code> folder of the repo, and the folder a file sits in is its progress.</p>
+    <p class="lede">Git works as it always does: code, branches, merges. Only the tracking changes. Features and issues are text files in a <code>.factory/</code> folder on a branch of their own, <code>factory_board</code>, and the folder a file sits in is its progress.</p>
     <div class="legend">
       <span><i class="sw you"></i>human: you</span>
       <span><i class="sw fac"></i>agent: the factory pass, and Claude Code it runs to write code</span>
@@ -144,30 +144,30 @@ svg .csub { font-size: 10.5px; fill: var(--muted); }
 
   <section aria-labelledby="files-h">
     <span class="kicker">1 · The repo</span>
-    <h2 id="files-h">One repository, one folder more</h2>
+    <h2 id="files-h">One repository, one branch more</h2>
     <div class="split">
       <div class="box">
-        <div class="vhead">sample-project/</div>
-<pre>sample-project/
-├── src/ …
-└── .factory/
-    ├── factory.toml         <span class="c">test command, rules</span>
-    ├── <span class="y">backlog/</span>             <span class="c">ideas you keep; never built</span>
-    ├── <span class="y">new/</span>                 <span class="c">you add here; not built yet</span>
-    │   └── <span class="y">FT16-search-box.md</span>
-    ├── review/              <span class="c">built: read it (or a review job does)</span>
-    │   └── FT13-sync-icons.md
-    ├── ready/               <span class="c">yours to merge</span>
-    │   └── FT12-export-csv.md
-    ├── done/
-    └── <span class="y">stop/</span>                <span class="c">parked</span>
+        <div class="vhead">branch factory_board</div>
+<pre>.factory/
+├── factory.toml         <span class="c">test command, rules</span>
+├── <span class="y">backlog/</span>             <span class="c">ideas you keep; never built</span>
+├── <span class="y">new/</span>                 <span class="c">you add here; not built yet</span>
+│   └── <span class="y">FT16-search-box.md</span>
+├── review/              <span class="c">built: read it (or a review job does)</span>
+│   └── FT13-sync-icons.md
+├── ready/               <span class="c">yours to merge</span>
+│   └── FT12-export-csv.md
+├── done/
+└── <span class="y">stop/</span>                <span class="c">parked</span>
 
-branches:  master
+branches:  master         <span class="c">code</span>
+           <span class="f">factory_board</span>  <span class="c">this board</span>
            <span class="f">factory/FT12-export-csv</span>
            <span class="f">factory/FT13-sync-icons</span></pre>
       </div>
       <ul class="notes">
         <li><b>One file per feature or issue</b><span>Named by an ID such as <code>FT16</code> and a few words. The <code>FT</code> prefix keeps it apart from issue and PR numbers. Both are the same kind of file; the factory treats them alike.</span></li>
+        <li><b>The board has its own branch</b><span><code>factory_board</code> holds only <code>.factory/</code> and shares no history with <code>master</code>, so moving a file never adds a commit to your code. Keep it checked out beside your clone: <code>git worktree add ../sample-board factory_board</code>. <code>factory.toml</code> in the skill shows how to start the branch, or move an old board off <code>master</code>.</span></li>
         <li><b>The folder is the progress</b><span><code>ls .factory/*</code> is the whole board. A move between folders is a <code>git mv</code>, so <code>git log</code> shows each item's history.</span></li>
         <li><b>The code is built on branches</b><span>Each item gets <code>factory/&lt;ID&gt;-&lt;words&gt;</code>. You merge it into <code>master</code> the usual way.</span></li>
         <li><b><code>factory.toml</code></b><span>What the factory needs to know about this repo: how to test it, what to read first, files it must not touch.</span></li>
@@ -222,12 +222,11 @@ Round 1: the cache stays (icons.go:90).</span></pre>
   <section aria-labelledby="config-h">
     <span class="kicker">Settings</span>
     <h2 id="config-h">factory.toml</h2>
-    <p>One file in <code>.factory/</code> tells the agent how to work on this repository. You write it once and commit it; the agent reads it at the start of every pass and never changes it.</p>
+    <p>One file in <code>.factory/</code> on <code>factory_board</code> tells the agent how to work on this repository. You write it once and commit it; the agent reads it at the start of every pass and never changes it.</p>
     <div class="split">
       <div class="box">
         <div class="vhead">.factory/factory.toml</div>
 <pre><span class="y">base</span> = "master"
-<span class="y">remote</span> = "origin"
 <span class="y">owners</span> = ["alex"]
 
 <span class="y">test</span> = "make test"
@@ -245,7 +244,7 @@ Round 1: the cache stays (icons.go:90).</span></pre>
 <span class="y">notify</span> = "notify-send -a factory {title} {text}"</pre>
       </div>
       <ul class="notes">
-        <li><b>base, remote</b><span>The branch you merge into and the remote everything is pushed to. Work branches start from the newest <code>base</code>; board commits go onto it.</span></li>
+        <li><b>base</b><span>The branch you merge into. Work branches start from the newest <code>base</code>; the agent never pushes to it.</span></li>
         <li><b>owners</b><span>The names you sign your sections with. Only their sections are requests, answers and review notes; anyone else's is read as information.</span></li>
         <li><b>test</b><span>The command that must pass before an item reaches <code>ready/</code>. The agent runs it after every build and fix round.</span></li>
         <li><b>after_change</b><span>Commands to run when generated files need updating, such as compiled layouts or translation catalogs.</span></li>
@@ -304,47 +303,51 @@ Round 1: the cache stays (icons.go:90).</span></pre>
   <section aria-labelledby="branch-h">
     <span class="kicker">3 · Branches</span>
     <h2 id="branch-h">How branches work</h2>
-    <p>Two kinds of branch. <code>master</code> holds the code you accepted and the board. Each item that gets built has its own branch, <code>factory/&lt;ID&gt;-&lt;words&gt;</code>, where only the agent commits.</p>
+    <p>Three kinds of branch. <code>master</code> holds the code you accepted. <code>factory_board</code> holds the board, and both you and the agent commit there. Each item that gets built has its own branch, <code>factory/&lt;ID&gt;-&lt;words&gt;</code>, where only the agent commits.</p>
     <div class="figure">
-      <svg viewBox="0 0 890 250" role="img" aria-label="Git graph: master and the branch factory/FT16-search-box, each commit marked human or agent">
-        <text class="bname" x="20" y="64">master</text>
-        <text class="bname" x="20" y="174">factory/FT16-</text>
-        <text class="bname" x="20" y="188">search-box</text>
+      <svg viewBox="0 0 890 320" role="img" aria-label="Git graph: factory_board, master and the branch factory/FT16-search-box, each commit marked human or agent">
+        <text class="bname" x="20" y="57">factory_</text>
+        <text class="bname" x="20" y="71">board</text>
+        <text class="bname" x="20" y="154">master</text>
+        <text class="bname" x="20" y="264">factory/FT16-</text>
+        <text class="bname" x="20" y="278">search-box</text>
         <path class="line" d="M110 60 L870 60"/>
-        <path class="line" d="M300 60 C 330 60, 330 170, 360 170 L 680 170 C 720 170, 730 60, 770 60"/>
-        <path class="line" d="M520 60 C 545 60, 545 170, 570 170"/>
-        <!-- master -->
+        <path class="line" d="M110 150 L870 150"/>
+        <path class="line" d="M300 150 C 330 150, 330 260, 360 260 L 680 260 C 720 260, 730 150, 770 150"/>
+        <path class="line" d="M520 150 C 545 150, 545 260, 570 260"/>
+        <!-- factory_board -->
         <circle class="cm h" cx="130" cy="60" r="8"/>
         <text class="clabel" x="130" y="38" text-anchor="middle">new: FT16</text>
-        <text class="csub" x="130" y="24" text-anchor="middle">board</text>
+        <text class="csub" x="130" y="24" text-anchor="middle">you add</text>
         <circle class="cm a" cx="215" cy="60" r="8"/>
         <text class="clabel" x="215" y="38" text-anchor="middle">FT16 question</text>
-        <text class="csub" x="215" y="24" text-anchor="middle">board</text>
+        <text class="csub" x="215" y="24" text-anchor="middle">agent asks</text>
         <circle class="cm h" cx="300" cy="60" r="8"/>
         <text class="clabel" x="300" y="38" text-anchor="middle">answer: FT16</text>
-        <text class="csub" x="300" y="24" text-anchor="middle">board</text>
+        <text class="csub" x="300" y="24" text-anchor="middle">you answer</text>
         <circle class="cm a" cx="440" cy="60" r="8"/>
         <text class="clabel" x="440" y="38" text-anchor="middle">FT16 → review</text>
-        <text class="csub" x="440" y="24" text-anchor="middle">board</text>
-        <circle class="cm h" cx="520" cy="60" r="8"/>
-        <text class="clabel" x="520" y="38" text-anchor="middle">merge FT15</text>
-        <text class="csub" x="520" y="24" text-anchor="middle">another item</text>
-        <circle class="cm h" cx="770" cy="60" r="8"/>
-        <text class="clabel" x="770" y="38" text-anchor="middle">merge FT16</text>
-        <text class="csub" x="770" y="24" text-anchor="middle">you accept</text>
+        <text class="csub" x="440" y="24" text-anchor="middle">built</text>
         <circle class="cm a" cx="845" cy="60" r="8"/>
         <text class="clabel" x="845" y="38" text-anchor="middle">FT16 → done</text>
-        <text class="csub" x="845" y="24" text-anchor="middle">board</text>
+        <text class="csub" x="845" y="24" text-anchor="middle">merge seen</text>
+        <!-- master -->
+        <circle class="cm h" cx="520" cy="150" r="8"/>
+        <text class="clabel" x="520" y="128" text-anchor="middle">merge FT15</text>
+        <text class="csub" x="520" y="114" text-anchor="middle">another item</text>
+        <circle class="cm h" cx="770" cy="150" r="8"/>
+        <text class="clabel" x="770" y="128" text-anchor="middle">merge FT16</text>
+        <text class="csub" x="770" y="114" text-anchor="middle">you accept</text>
         <!-- branch -->
-        <circle class="cm a" cx="400" cy="170" r="8"/>
-        <text class="clabel" x="400" y="198" text-anchor="middle">search box</text>
-        <text class="csub" x="400" y="213" text-anchor="middle">Claude Code</text>
-        <circle class="cm a" cx="570" cy="170" r="8"/>
-        <text class="clabel" x="570" y="198" text-anchor="middle">merge master</text>
-        <text class="csub" x="570" y="213" text-anchor="middle">master moved on</text>
-        <circle class="cm a" cx="670" cy="170" r="8"/>
-        <text class="clabel" x="670" y="198" text-anchor="middle">fix round 1</text>
-        <text class="csub" x="670" y="213" text-anchor="middle">your review note</text>
+        <circle class="cm a" cx="400" cy="260" r="8"/>
+        <text class="clabel" x="400" y="288" text-anchor="middle">search box</text>
+        <text class="csub" x="400" y="303" text-anchor="middle">Claude Code</text>
+        <circle class="cm a" cx="570" cy="260" r="8"/>
+        <text class="clabel" x="570" y="288" text-anchor="middle">merge master</text>
+        <text class="csub" x="570" y="303" text-anchor="middle">master moved on</text>
+        <circle class="cm a" cx="670" cy="260" r="8"/>
+        <text class="clabel" x="670" y="288" text-anchor="middle">fix round 1</text>
+        <text class="csub" x="670" y="303" text-anchor="middle">your review note</text>
       </svg>
     </div>
     <div class="legend">
@@ -355,7 +358,7 @@ Round 1: the cache stays (icons.go:90).</span></pre>
       <li><strong>Start.</strong> When an item becomes clear, the agent branches from the newest <code>master</code>. One item, one branch; the ID in the file name is the ID in the branch name.</li>
       <li><strong>Build and fix.</strong> Claude Code commits the code on that branch, and every fix round adds commits to the same branch. The agent pushes it; it never force-pushes or rewrites it.</li>
       <li><strong>Keeping up.</strong> When <code>master</code> moves on and the branch no longer merges cleanly, the agent merges <code>master</code> into the branch and runs the tests again. It doesn't rebase, so what you already reviewed keeps its commits.</li>
-      <li><strong>Board on master.</strong> The agent's commits on <code>master</code> only move files and add sections under <code>.factory/</code>. It never puts code on <code>master</code>.</li>
+      <li><strong>Board apart.</strong> The agent's board commits go to <code>factory_board</code> and only move files and add sections under <code>.factory/</code>. It never pushes to <code>master</code>, and <code>factory_board</code> is never merged anywhere.</li>
       <li><strong>Finish.</strong> You merge the branch into <code>master</code>. For a file in <code>ready/</code>, the next pass sees the merge and moves it to <code>done/</code>; otherwise, or after a squash or rebase merge, move it yourself. However a file reaches <code>done/</code>, the next pass where <code>gh</code> works closes what it links: the issues and PRs your sections name with <code>Closes #12</code>, <code>Fixes #12</code> or <code>Resolves #12</code>, the issue or PR the item builds, and the branch's open PRs. It notes what it closed in a last section, once. Deleting the branch is yours too; the agent never deletes a branch.</li>
     </ul>
   </section>
@@ -363,13 +366,13 @@ Round 1: the cache stays (icons.go:90).</span></pre>
   <section aria-labelledby="day-h">
     <span class="kicker">4 · Daily use</span>
     <h2 id="day-h">A day with the factory</h2>
-    <p>All in your usual clone of <code>sample-project/</code>. A pass runs by itself every 30 minutes.</p>
+    <p>Code in your usual clone, <code>sample-project/</code>; the board in its worktree beside it, <code>sample-board/</code>. A pass runs by itself every 30 minutes.</p>
     <ol class="day">
       <li>
         <span class="t you">09:00</span>
         <div class="body">
           <h3>See what waits for you</h3>
-          <div class="box"><pre><span class="p">$ </span>git pull
+          <div class="box"><pre><span class="p">$ </span>cd ../sample-board && git pull
 <span class="p">$ </span>python3 board.py -o board.html     <span class="c"># or: ls .factory/review .factory/ready</span>
 <span class="o">.factory/review:
 .factory/ready:
@@ -381,7 +384,8 @@ FT12-export-csv.md</span></pre></div>
         <div class="body">
           <h3>Merge what's ready</h3>
           <p>Read the branch and merge it. The next pass moves the file to <code>done/</code>.</p>
-          <div class="box"><pre><span class="p">$ </span>git diff master...origin/factory/FT12-export-csv
+          <div class="box"><pre><span class="p">$ </span>cd ../sample-project && git fetch
+<span class="p">$ </span>git diff master...origin/factory/FT12-export-csv
 <span class="p">$ </span>git merge origin/factory/FT12-export-csv && git push</pre></div>
         </div>
       </li>
@@ -390,7 +394,7 @@ FT12-export-csv.md</span></pre></div>
         <div class="body">
           <h3>Add a feature or an issue</h3>
           <p>A new file in <code>new/</code>, named by a few words; the agent gives it the next ID, so two people adding at once never clash. Write it as you'd tell a colleague. Not sure yet? Put it in <code>backlog/</code> instead; it gets its ID and waits there, untouched, until you move it to <code>new/</code>.</p>
-          <div class="box"><pre><span class="p">$ </span>$EDITOR .factory/new/search-box.md
+          <div class="box"><pre><span class="p">$ </span>cd ../sample-board && $EDITOR .factory/new/search-box.md
 <span class="add">  # Search box in the toolbar
 
   ## alex · 2026-11-04 09:15
@@ -430,7 +434,9 @@ FT12-export-csv.md</span></pre></div>
         <div class="body">
           <h3>Review: accept, or ask for a change</h3>
           <p>With a review job (section 5), it reviews first and only clean builds reach <code>ready/</code>; you can still add notes of your own. Without one, read the branch. Good: merge it, and <code>git mv</code> the file to <code>done/</code> yourself, since only files in <code>ready/</code> move there on their own. Not yet: write what to change, and the next pass fixes it on the same branch.</p>
-          <div class="box"><pre><span class="p">$ </span>git fetch && git diff master...origin/factory/FT16-search-box
+          <div class="box"><pre><span class="p">$ </span>cd ../sample-project && git fetch
+<span class="p">$ </span>git diff master...origin/factory/FT16-search-box
+<span class="p">$ </span>cd ../sample-board && git pull
 <span class="p">$ </span>$EDITOR .factory/review/FT16-search-box.md
 <span class="add">  ## alex · 2026-11-04 14:00
   src/toolbar.go:41: keep the text when the list reloads.</span>
@@ -444,6 +450,7 @@ FT12-export-csv.md</span></pre></div>
       <table>
         <thead><tr><th>You want to</th><th>Do</th></tr></thead>
         <tbody>
+          <tr><td>Edit the board</td><td>in the <code>factory_board</code> worktree; pull before, push after</td></tr>
           <tr><td>See what waits for you</td><td><code>python3 board.py -o board.html</code>: the cards marked <i>you</i></td></tr>
           <tr><td>Add a feature or issue</td><td>a file in <code>.factory/new/</code>, push</td></tr>
           <tr><td>Keep an idea for later</td><td>a file in <code>.factory/backlog/</code>, push; <code>git mv</code> it to <code>new/</code> when it should be built</td></tr>
@@ -499,7 +506,8 @@ verdict: pass</span></pre>
       <table>
         <thead><tr><th>Path</th><th>Who</th><th>What they do there</th></tr></thead>
         <tbody>
-          <tr><td class="path">src/ … on master</td><td><span class="chip h">human</span></td><td>Changes only by your merges. The agent never commits code to <code>master</code>.</td></tr>
+          <tr><td class="path">master</td><td><span class="chip h">human</span></td><td>Changes only by your merges. The agent never pushes to <code>master</code>.</td></tr>
+          <tr><td class="path">factory_board</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The board: only <code>.factory/</code>. Both of you commit here; nobody merges it.</td></tr>
           <tr><td class="path">factory/&lt;ID&gt;-… branches</td><td><span class="chip a">agent</span></td><td>Claude Code writes the code and fix rounds; the agent pushes, and merges <code>master</code> in when needed. You read them and merge them.</td></tr>
           <tr><td class="path">.factory/factory.toml</td><td><span class="chip h">human</span></td><td>You set the test command, what to read first, the paths the agent must not touch.</td></tr>
           <tr><td class="path">.factory/backlog/</td><td><span class="chip h">human</span></td><td>You keep ideas and rough requests here, and move a file to <code>new/</code> when it should be built. The agent only gives new files their ID.</td></tr>
@@ -515,7 +523,7 @@ verdict: pass</span></pre>
         </tbody>
       </table>
     </div>
-    <p>If you and a pass push at the same moment, one push is refused; that side pulls and pushes again, as with any two people sharing a branch. A board commit touches only <code>.factory/</code>, so CI can skip it, and <code>git log -- src</code> leaves it out.</p>
+    <p>If you and a pass push at the same moment, one push is refused; that side pulls and pushes again, as with any two people sharing a branch. Board commits live on <code>factory_board</code>, so <code>master</code>'s history and its CI see only code.</p>
   </section>
 </main>
 </body>

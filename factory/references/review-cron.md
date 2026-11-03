@@ -1,9 +1,10 @@
 # Sample prompt: a review job beside the factory
 
-A scheduled job, run in its own clone of the repository, that reviews the items in `.factory/review/` and records each review in the item file. It only reviews: it never edits code, merges, pushes branches or moves item files.
+A scheduled job, run in its own clone of the repository, that reviews the items in `.factory/review/` on the `factory_board` branch and records each review in the item file. It only reviews: it never edits code, merges, pushes branches or moves item files.
 
 Before using it:
 
+- Make sure the job can push to `factory_board` (see `github-app.md`); it never pushes to `base`.
 - Add the reviewer's name (its `git config user.name`) to `owners` in `factory.toml`.
 - Give the job a way to reach you (a chat or mail tool), or read its summary.
 - Set `review = true` in `factory.toml`. The factory then moves a `review/` item to `ready/` only when the latest review of its current head says `verdict: pass`, and turns `verdict: fix` into a fix round on the `fix:` list. The fix makes a new head, which this job reviews again.
@@ -34,17 +35,17 @@ The job runs in its own clone, `~/.factory/OWNER/REPO/clone-review`, never in so
 REPO=OWNER/REPO
 CONTACT=<who to tell, and how: tg:@name, slack:#channel, or anything else>
 
-Review the factory items in review/ of $REPO, in
-~/.factory/$REPO/clone-review (a clone used only by this job). If it does
-not exist, gh repo clone "$REPO" ~/.factory/$REPO/clone-review. Never use
-anyone's working copy. Review only: never edit code, merge, push
+Review the factory items in .factory/review/ on the factory_board branch
+of $REPO, in ~/.factory/$REPO/clone-review (a clone used only by this
+job). If it does not exist, gh repo clone "$REPO"
+~/.factory/$REPO/clone-review. Never use anyone's working copy. Review only: never edit code, merge, push
 branches, or move item files.
 
 If git has no credential helper here (for example with a GitHub App gh
 wrapper), run every fetch, pull and push with gh as the helper, for that
 command only:
   GH_REPO=$REPO git -c credential.helper= \
-    -c 'credential.helper=!gh auth git-credential' push origin <base>
+    -c 'credential.helper=!gh auth git-credential' push origin factory_board
 Never ask gh for a token, or put one in a variable, file, remote URL or
 git config.
 
@@ -54,25 +55,27 @@ git config.
    reviewing: stop. If older, take it over. Touch it before and after
    each review; remove it when the run ends, also on failure.
 2. Recover what a stopped run left, and say so in the summary: abort an
-   unfinished rebase or merge; go back to base; stash uncommitted changes
-   as "review: left by a stopped run <time>"; remove leftover
+   unfinished rebase or merge; go back to factory_board; stash
+   uncommitted changes as "review: left by a stopped run <time>"; remove leftover
    ~/.factory/$REPO/review-* worktrees (git worktree remove --force, then
-   git worktree prune). Local commits on base that are not on
-   origin/<base>: save them as refs/factory/stopped/<YYYYMMDD-HHMM>, then
-   reset base to origin/<base> after the pull below.
-3. git pull. For each .factory/review/*.md, take `branch` from its header
-   and its head: git rev-parse origin/<branch>.
+   git worktree prune). Local commits on factory_board that are not on
+   origin/factory_board: save them as refs/factory/stopped/<YYYYMMDD-HHMM>,
+   then reset factory_board to origin/factory_board after the pull below.
+3. git fetch --prune. Check out factory_board (the first time,
+   git checkout -b factory_board origin/factory_board) and pull it.
+   Read base from .factory/factory.toml. For each .factory/review/*.md,
+   take `branch` from its header and its head:
+   git rev-parse origin/<branch>.
    Skip the item when:
    - its file already has a review section whose `head:` is that commit
      (a new head, after a fix round, is reviewed again); or
    - it waits: its last factory section is a question, with no section
      from a name in factory.toml's owners after it.
 4. Check the branch out in a temporary worktree, so the reviewer reads
-   the branch's files, not base's:
+   the branch's files:
      git worktree add --detach ~/.factory/$REPO/review-<ID> origin/<branch>
 5. Review there with $review-code, run through $coder with Codex:
-   origin/<base>...origin/<branch> against the item's request and plan
-   (base is in .factory/factory.toml).
+   origin/<base>...origin/<branch> against the item's request and plan.
    In the task you give Codex, say plainly that it only reads and
    reports: it changes no files, makes no commits, and never pushes,
    fetches or runs gh.
@@ -92,8 +95,8 @@ git config.
    verdict is fix when there is any P0 or P1 finding; only those go under
    fix:. Leave out empty lists. Never edit earlier sections.
 7. Commit only that file ("review: FT16 pass" or "review: FT16 fix"),
-   git pull --rebase, push to base. Never commit anything outside
-   .factory/. If the push is refused three times, stop and say so.
+   git pull --rebase, push to factory_board. Never push to base, or
+   commit anything outside .factory/. If the push is refused three times, stop and say so.
 8. Messages:
    Before each review, tell $CONTACT that it starts (ID and title).
    After writing it, tell $CONTACT the verdict: pass, or fix with its

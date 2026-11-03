@@ -8,8 +8,8 @@ Run the whole pass, not only `new/`: the fix rounds that a review job's `verdict
 
 Before using it:
 
-- Make sure `gh` can act on the repository with rights to push to `factory/**` branches and to `base` (see `github-app.md`). A GitHub App wrapper works as long as it passes `gh auth git-credential` through; nothing else about `gh` login is used.
-- Nothing to set up for builds: the clone stays on `base` for board commits, and each build gets its own checkout of its branch in `~/.factory/OWNER/REPO/`, so Codex's files never touch the clone and a build cut short continues there on the next pass. The factory creates and removes these folders itself.
+- Make sure `gh` can act on the repository with rights to push to `factory/**` branches and to `factory_board`, and none to push to `base` (see `github-app.md`). A GitHub App wrapper works as long as it passes `gh auth git-credential` through; nothing else about `gh` login is used.
+- Nothing to set up for builds: the clone's own checkout holds the `factory_board` branch for board commits, and each build gets its own checkout of its branch in `~/.factory/OWNER/REPO/`, so Codex's files never touch the clone and a build cut short continues there on the next pass. The factory creates and removes these folders itself.
 - Give the job a way to reach you (a chat or mail tool), or read its summary.
 - Schedule it every 30 minutes or so. A pass builds at most one new item, and the factory's lock keeps two passes from overlapping.
 

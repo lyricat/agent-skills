@@ -1,6 +1,6 @@
 # Sample prompt: a review job beside the factory, through gh
 
-A scheduled job that, using `gh` and no clone of the project, reviews the items in `.factory/review/` and records each review in the item file. It only reviews: it never edits code, merges, pushes branches or moves item files.
+A scheduled job that, using `gh` and no clone of the project, reviews the items in `.factory/review/` on the `factory_board` branch and records each review in the item file. It only reviews: it never edits code, merges, pushes branches or moves item files.
 
 Before using it:
 
@@ -28,7 +28,7 @@ Only P0 and P1 findings block (`verdict: fix`); P2 and P3 go under `notes:`.
 
 ## The prompt
 
-The job reads and writes the board with the GitHub API. Its token needs Contents: write, and permission to push to `base` if `base` is protected (see `github-app.md`).
+The job reads and writes the board with the GitHub API. Its token needs Contents: write and permission to push to `factory_board`, not to `base` (see `github-app.md`).
 
 ```
 REPO=OWNER/REPO
@@ -41,9 +41,9 @@ or move item files.
 Anything that talks to GitHub goes through gh (gh api, gh repo clone,
 gh auth status), never plain git or curl against github.com.
 
-Let R=repos/$REPO. Read .factory/factory.toml for base, owners and
-timezone:
-  gh api "$R/contents/.factory/factory.toml" --jq .content | base64 -d
+Let R=repos/$REPO. The board is on the branch factory_board. Read
+.factory/factory.toml there for base, owners and timezone:
+  gh api "$R/contents/.factory/factory.toml?ref=factory_board" --jq .content | base64 -d
 
 1. Lock: mkdir -p ~/.factory/$REPO && mkdir ~/.factory/$REPO/review.lock
    (one lock per repository, apart from the factory's pass.lock).
@@ -53,9 +53,9 @@ timezone:
    lock before and after each review; remove it when the run ends, also
    on failure.
 2. List the items:
-     gh api "$R/contents/.factory/review?ref=<base>" --jq '.[] | select(.name|endswith(".md")) | .path'
+     gh api "$R/contents/.factory/review?ref=factory_board" --jq '.[] | select(.name|endswith(".md")) | .path'
    For each, read the file and keep its blob sha:
-     gh api "$R/contents/<path>?ref=<base>" --jq '.sha, .content'
+     gh api "$R/contents/<path>?ref=factory_board" --jq '.sha, .content'
    Take `branch` from its header and the branch head:
      gh api "$R/branches/<branch>" --jq .commit.sha
    Skip the item when:
@@ -85,9 +85,9 @@ timezone:
 
    verdict is fix when there is any P0 or P1 finding; only those go under
    fix:. Leave out empty lists. Never edit earlier sections.
-6. Write the whole file back to base in one commit, passing the blob sha
+6. Write the whole file back to factory_board in one commit, passing the blob sha
    you read:
-     gh api -X PUT "$R/contents/<path>" -f branch=<base> \
+     gh api -X PUT "$R/contents/<path>" -f branch=factory_board \
        -f message="review: FT16 pass" -f sha=<blob sha> \
        -f content="$(base64 -w0 < item.md)"
    A 409 or 422 means the file changed meanwhile: read it again, append

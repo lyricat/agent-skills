@@ -10,7 +10,7 @@ Install the App on the factory's repository only ("Only select repositories"), n
 
 | Permission | Access | Why |
 |---|---|---|
-| Contents | Read and write | Fetch; push board commits to `base`; push `factory/` branches. |
+| Contents | Read and write | Fetch; push board commits to `factory_board`; push `factory/` branches. Never `base`. |
 | Metadata | Read-only | Required by GitHub for every App. |
 
 Leave every other permission at "No access". In particular:
@@ -27,9 +27,9 @@ No account or organization permissions are needed, and the App needs no webhook.
 
 Set rules on the repository (Settings → Rules → Rulesets) so that the server also enforces what the skill forbids. Bypass works per ruleset, so keep these separate.
 
-1. **Board pushes to `base`.** If `base` requires pull requests or status checks, add the App to that ruleset's bypass list; the factory commits `.factory/` changes straight to `base`. Do not require signed commits on `base`: the factory's commits are unsigned.
-2. **No force-push, no deletion.** A ruleset targeting `base` and `factory/**` with "Block force pushes" and "Restrict deletions", with no bypass for the App.
-3. **Protected paths** (push rulesets, where the plan offers them). Restrict file paths such as `.factory/factory.toml` and `.github/**`, with no bypass for the App. A push ruleset applies to every branch, so it cannot say "only `.factory/` on `base`"; the skill's own check (Writing to the board, step 4) covers that.
+1. **Keep the App off `base`.** A ruleset targeting `base` with "Restrict updates" (or "Require a pull request before merging"), with no bypass for the App. The factory commits the board to `factory_board` and never pushes to `base`, so it needs no bypass anywhere. Do not require signed commits on `factory_board` or `factory/**`: the factory's commits are unsigned.
+2. **No force-push, no deletion.** A ruleset targeting `base`, `factory_board` and `factory/**` with "Block force pushes" and "Restrict deletions", with no bypass for the App.
+3. **Protected paths** (push rulesets, where the plan offers them). Restrict file paths such as `.factory/factory.toml` and `.github/**`, with no bypass for the App. A push ruleset applies to every branch, so it cannot say "only `.factory/` on `factory_board`"; the skill's own check (Writing to the board, step 4) covers that.
 
 Do not require linear history on `factory/**`: fix rounds merge `base` into the branch.
 
@@ -45,7 +45,8 @@ The skill runs the coding agent and the tests in the factory's own environment: 
 
 From a throwaway clone, as the App:
 
-- `git push` of a commit that changes only `.factory/` to `base`: accepted.
-- `git push --force` to `base` or a `factory/` branch: refused.
+- `git push` of a commit that changes only `.factory/` to `factory_board`: accepted.
+- `git push` of any commit to `base`: refused.
+- `git push --force` to `base`, `factory_board` or a `factory/` branch: refused.
 - A push that changes `.github/workflows/`: refused.
 - With the stricter setup above: `git push` from a build worktree with the coding agent's environment fails for lack of credentials.

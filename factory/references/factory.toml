@@ -1,10 +1,26 @@
 # .factory/factory.toml: how the factory works on this repository.
-# Copy it into the repository, set the values, and commit it with empty
-# folders backlog/ new/ review/ ready/ done/ stop/ (a .gitkeep in each).
+#
+# It lives on the branch factory_board, which holds only .factory/ and
+# shares no history with the code. Set it up once, from a clean checkout:
+#
+#   git switch --orphan factory_board
+#   mkdir -p .factory/{backlog,new,review,ready,done,stop}
+#   touch .factory/{backlog,new,review,ready,done,stop}/.gitkeep
+#   cp /path/to/this/factory.toml .factory/    # then set the values
+#   git add .factory && git commit -m "Start the factory board"
+#   git push -u origin factory_board && git switch master
+#
+# A board that is still in .factory/ on master moves the same way: replace
+# the mkdir, touch and cp lines with `git checkout master -- .factory` (and
+# make backlog/ if it is missing). Then remove it from master in one commit:
+# `git rm -r .factory`. The items' earlier moves stay in master's history.
+#
+# To edit the board, keep a second worktree of it beside your clone:
+#   git worktree add ../<repo>-board factory_board
 
-# The branch you merge into, and the remote the factory pushes to.
+# The branch you merge into; builds start from it. The factory never
+# pushes to it. The remote is the job's (default origin), not set here.
 base = "master"
-remote = "origin"
 
 # Names whose "## name · time" sections count as yours: requests,
 # answers and review notes. Sections by other names are read as

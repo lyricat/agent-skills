@@ -7,7 +7,7 @@ Run the whole pass, not only `new/`: the fix rounds that a review job's `verdict
 Before using it:
 
 - Nothing to clone by hand: the job keeps its own clone in `~/.factory/OWNER/REPO/clone`, next to the build worktrees, made with `gh repo clone` the first time. It is never a working copy someone edits, and not the review job's clone.
-- Nothing to set up for builds: the clone stays on `base` for board commits, and each build gets its own checkout of its branch in `~/.factory/OWNER/REPO/`, so Codex's files never touch the clone and a build cut short continues there on the next pass. The factory creates and removes these folders itself.
+- Nothing to set up for builds: the clone's own checkout holds the `factory_board` branch for board commits, and each build gets its own checkout of its branch in `~/.factory/OWNER/REPO/`, so Codex's files never touch the clone and a build cut short continues there on the next pass. The factory creates and removes these folders itself.
 - Give the job a way to reach you (a chat or mail tool), or read its summary.
 - Schedule it every 30 minutes or so. A pass builds at most one new item, and the factory's lock keeps two passes from overlapping.
 
