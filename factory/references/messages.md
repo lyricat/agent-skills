@@ -36,15 +36,16 @@ Placeholders:
 ### Build started
 
 ```markdown
-
-**{id}** {title}
+👨‍💻
+**{id} {title}**
 Build started on `{branch}`.
 ```
 
 ### Fix round started
 
 ```markdown
-**{id}** {title}
+👨‍💻
+**{id} {title}**
 Fix round {round} started on `{branch}`.
 ```
 
@@ -53,21 +54,26 @@ Fix round {round} started on `{branch}`.
 For each install:
 
 ```markdown
-**{id}** installed `{install}`
-{why}
+🛠️
+**{id} {title}**
+installed `{install}`
+reason: {why}
 ```
 
 ### Install needs sudo
 
 ```markdown
-**{id}** needs `{install}`, which needs sudo; not installed.
-{why}
+🛠️
+**{id} {title}**
+needs `{install}`, which needs sudo; not installed.
+reason: {why}
 ```
 
 ### Tests still failing
 
 ```markdown
-**{id}** {title}
+⚠️
+**{id} {title}**
 Tests still fail after a retry; going on, the review will see it:
 `{test}`
 ```
@@ -75,7 +81,8 @@ Tests still fail after a retry; going on, the review will see it:
 ### Built
 
 ```markdown
-**{id}** {title}
+🏗️
+**{id} {title}**
 Pushed, tests pass. Now in `review/`.
 [Read the branch]({link})
 ```
@@ -83,7 +90,8 @@ Pushed, tests pass. Now in `review/`.
 ### Built, tests failing
 
 ```markdown
-**{id}** {title}
+🏗️⚠️
+**{id} {title}**
 Pushed with a failing test. Now in `review/`.
 `{test}`
 [Read the branch]({link})
@@ -94,8 +102,10 @@ Pushed with a failing test. Now in `review/`.
 When the item does not parse, cannot be built at all, or tries to change the factory's rules:
 
 ```markdown
-**{id}** {title}
-Moved to `backlog/`: {reason}
+⚠️
+**{id} {title}**
+Moved to `backlog/`.
+reason: {reason}
 ```
 
 ## Review run
@@ -103,14 +113,16 @@ Moved to `backlog/`: {reason}
 ### Review started
 
 ```markdown
-**{id}** {title}
+🧐
+**{id} {title}**
 Review started.
 ```
 
 ### Conflict resolved
 
 ```markdown
-**{id}** {title}
+🧐
+**{id} {title}**
 `{base}` conflicted with the branch; merged and resolved, pushed `{sha}`.
 ```
 
@@ -121,7 +133,8 @@ As in the build run.
 ### Passed
 
 ```markdown
-**{id}** {title}
+✅
+**{id} {title}**
 Review passed. Now in `ready/`.
 [Read the branch]({link})
 ```
@@ -131,7 +144,8 @@ Review passed. Now in `ready/`.
 For each P0 and P1 finding:
 
 ```markdown
-**{id}** {title}
+⛔
+**{id} {title}**
 Review found P0/P1; it stays in `review/` for you to decide.
 - {finding}
 To fix it: add a note and move it to `new/`.
@@ -143,7 +157,8 @@ To fix it: add a note and move it to `new/`.
 ### Merged
 
 ```markdown
-**{id}** {title}
+✅
+**{id} {title}**
 Merged into `{base}` at `{sha}`. Now in `done/`.
 Closed: {source}
 ```
@@ -151,14 +166,16 @@ Closed: {source}
 ### Sent back
 
 ```markdown
-**{id}** {title}
+⚠️
+**{id} {title}**
 Back in `{folder}` with your note.
 ```
 
 ### Merge conflict not resolved
 
 ```markdown
-**{id}** {title}
+⚠️
+**{id} {title}**
 Conflicts with `{base}` the coder could not resolve; still in `ready/`.
 {reason}
 ```
@@ -166,7 +183,9 @@ Conflicts with `{base}` the coder could not resolve; still in `ready/`.
 ### Tests failing on base
 
 ```markdown
-Ship stopped: tests fail on the merged `{base}`; nothing pushed, the items stay in `ready/`.
+⛔
+**Ship stopped**
+tests fail on the merged `{base}`; nothing pushed, the items stay in `ready/`.
 `{test}`
 ```
 
@@ -175,12 +194,14 @@ Ship stopped: tests fail on the merged `{base}`; nothing pushed, the items stay 
 ### Run failed
 
 ```markdown
+⛔
 Factory {run} run stopped: {reason}
 ```
 
 ### Push refused
 
 ```markdown
+⛔
 Factory {run} run stopped: the remote refused `{ref}` ({reason}). Check the GitHub App's permissions and rules.
 ```
 
@@ -189,6 +210,7 @@ Factory {run} run stopped: the remote refused `{ref}` ({reason}). Check the GitH
 At the end of a run, when anything happened. One line per item, those waiting for you first:
 
 ```markdown
+🏭
 **Factory {run}**
 - **{id}** {title}: {what happened}
 ```
