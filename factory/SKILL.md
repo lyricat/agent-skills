@@ -24,6 +24,7 @@ The task gives these; otherwise use the defaults:
 - `run`: `build`, `review` or `ship`.
 - `REPO`: `OWNER/REPO` on GitHub.
 - `contact`: who to tell, and how (a chat or mail tool). Without one, put every message in the run's summary.
+- `coder`: which coding agent to call, such as Codex or Claude Code. Default: the runner's `coder` tool with its own default agent, else this agent's own CLI.
 
 Every message, to the contact or as a GitHub comment, uses its template in `references/messages.md`, named below in quotes ("Build started"). If one cannot be sent, put it in the summary and go on.
 - `dir`: the run's own directory, `~/.factory/<OWNER>/<REPO>/<run>`, created when missing. It holds the run's clone (`clone/`), its lock (`lock/`) and its worktrees. Each run has its own, so a build and a review can run at once without touching each other's files.
@@ -146,7 +147,7 @@ An item that does not parse, or that cannot be built at all (it contradicts itse
    - Finish the task yourself. Where the request leaves something open, take a reasonable default and note it; do not stop to ask.
    - If the branch does not merge cleanly with `origin/<base>` (a PR, or a fix round after `base` moved), first merge `origin/<base>` into it and resolve the conflicts, keeping both sides' intent. Never rebase.
    - Implement the plan. Follow the repository's own instructions (`AGENTS.md`, `CLAUDE.md`) and the `read` files.
-   - When a dependency or tool is missing, install it: project dependencies (`go mod download`, `npm install`, …) and user-level tools (`go install`, `pip install --user`, …). No `sudo`, no system package manager, nothing outside the user's home. List each install in the report.
+   - When a dependency or tool is missing, install it: project dependencies (`go mod download`, `npm install`, …) and user-level tools (`go install`, `pip install --user`, …). No `sudo`, no system package manager, nothing outside the user's home. List in the report only what the repository did not already pin: a tool it does not specify, or a dependency that changes a manifest or lockfile. Restoring what is pinned is routine and not listed: locked packages and their install scripts, modules from `go.sum`, the package manager version the repository specifies.
    - Run `test` (and `after_change` when needed). When it fails, find the cause, fix it, and run it again.
    - Commit in one or a few commits, each on one topic, titled in the history's style.
    - Do not push, fetch, run `gh`, touch other branches, change paths in `never`, deploy, or change the user's settings or windows. Scripted tests get a throwaway `HOME`.
