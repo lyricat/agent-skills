@@ -30,7 +30,8 @@
 ### `factory`
 
 - 每个条目是一个 Markdown 文件，所在的目录就是它的进度：`new/` → `review/` → `ready/` → `done/`。
-- build 构建 `new/` 中的一个条目并移入 `review/`；review 审查 `review/` 中的一个条目，没有 P0 或 P1 问题时移入 `ready/`；ship 在所有者确认后把 `ready/` 中的条目合并进目标分支并移入 `done/`。
+- build 构建 `new/` 中的一个条目并移入 `review/`；review 审查 `review/` 中的一个条目，没有 P0 或 P1 问题时移入 `ready/`，有问题且轮次低于 `max_rounds` 时退回 `new/`，由下一次 build 继续修复，达到上限后留在 `review/` 等所有者决定。
+- ship 在所有者确认后，或由定时任务（`items: auto`）自动处理 `ready/` 中审查仍然有效的条目：依次执行 `ship` 中的动作，默认是合并进目标分支、打新标签、推送目标分支，然后移入 `done/`。自动 ship 中合并冲突或测试失败的条目退回 `review/`。定时任务示例见 [`ship-cron.md`](factory/references/ship-cron.md)。
 - 目标分支由 `.factory/factory.toml` 中的 `base` 决定，默认是 `master`。构建从这个分支开始，ship 也合并进这个分支。
 
 要让完成的条目合并进 `develop` 而不是 `master`，在该仓库看板的 `factory.toml` 中设置：
@@ -39,7 +40,14 @@
 base = "develop"
 ```
 
-`base` 对整个仓库生效，不能为单个条目另行指定。全部配置项见 [`factory.toml`](factory/references/factory.toml)。
+`base` 对整个仓库生效，不能为单个条目另行指定。修复轮次和 ship 动作也在这里设置：
+
+```toml
+max_rounds = 3                       # 默认 1：每次 P0/P1 审查都等所有者决定
+ship = ["merge", "tag", "push"]      # 默认值；去掉 tag 不打标签，去掉 push 只检查不推送
+```
+
+新标签在最高的 `vX.Y.Z` 标签上把补丁号加一，没有时从 `v0.1.0` 开始。全部配置项见 [`factory.toml`](factory/references/factory.toml)。
 
 ## 安装
 

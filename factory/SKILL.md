@@ -1,21 +1,21 @@
 ---
 name: factory
-description: "Manage a software factory whose features and issues are plain Markdown files in the .factory/ folder of a repository's factory_board branch, the folder a file sits in being its progress. Three runs: build (a coding agent builds one item from new/ and it moves to review/), review (the coding agent reviews one item in review/; without P0 or P1 findings it moves to ready/), and ship (on the owner's word, merge ready/ items into the base branch and move them to done/, or send them back). Use when a scheduled task or the owner asks for a factory build, review or ship run on a repository whose factory_board branch has .factory/factory.toml. Do not use for repositories without that branch, or for one-off coding tasks."
+description: "Manage a software factory whose features and issues are plain Markdown files in the .factory/ folder of a repository's factory_board branch, the folder a file sits in being its progress. Three runs: build (a coding agent builds one item from new/ and it moves to review/), review (the coding agent reviews one item in review/; without P0 or P1 findings it moves to ready/, with them it goes back to new/ while fix rounds remain), and ship (on the owner's word or on a schedule, merge ready/ items into the base branch, tag it and push, moving them to done/, or send them back). Use when a scheduled task or the owner asks for a factory build, review or ship run on a repository whose factory_board branch has .factory/factory.toml. Do not use for repositories without that branch, or for one-off coding tasks."
 ---
 
 # Factory
 
 Two agents work the factory. The **manager** runs this skill: it reads and moves item files, runs git and `gh`, and tells the contact what happens. The **coder** is the coding agent the manager calls (the runner's `coder` tool, else the agent's CLI) to write code, resolve conflicts and review. Only the manager pushes.
 
-The board is plain files on their own branch, `factory_board`; code, branches and merges work as usual. `references/workflow-guide.html` shows the whole workflow for people. Sample prompts for scheduled jobs: `references/build-cron.md` and `references/review-cron.md`.
+The board is plain files on their own branch, `factory_board`; code, branches and merges work as usual. `references/workflow-guide.html` shows the whole workflow for people. Sample prompts for scheduled jobs: `references/build-cron.md`, `references/review-cron.md` and `references/ship-cron.md`.
 
 ## Runs
 
 - **build** (scheduled): one item from `new/` is built, or fixed, on its own branch and moves to `review/`.
-- **review** (scheduled): one item in `review/` is reviewed. Without P0 or P1 findings it moves to `ready/`; with them it stays and the owner decides.
-- **ship** (when the owner asks): the owner says which `ready/` items are fine and what to do with the rest. The fine ones are merged into `base` and move to `done/`.
+- **review** (scheduled): one item in `review/` is reviewed. Without P0 or P1 findings it moves to `ready/`; with them it goes back to `new/` for a fix round while its `round` is below `max_rounds`, else it stays and the owner decides.
+- **ship** (when the owner asks, or scheduled): the owner says which `ready/` items are fine and what to do with the rest, or a scheduled ship takes every `ready/` item whose review still holds. They go through the `ship` actions (merge into `base`, tag, push) and move to `done/`.
 
-Each run handles one item (ship: the items the owner names) and stops. The coder works on its own: it decides what the request leaves open, resolves conflicts, installs what is missing and fixes failing tests, and nobody waits for an answer. Unclear ideas belong in `backlog/`, where the factory does not build them.
+Each run handles one item (ship: the items it takes) and stops. The coder works on its own: it decides what the request leaves open, resolves conflicts, installs what is missing and fixes failing tests, and nobody waits for an answer. Unclear ideas belong in `backlog/`, where the factory does not build them.
 
 ## Inputs
 
@@ -25,6 +25,7 @@ The task gives these; otherwise use the defaults:
 - `REPO`: `OWNER/REPO` on GitHub.
 - `contact`: who to tell, and how (a chat or mail tool). Without one, put every message in the run's summary.
 - `coder`: which coding agent to call, such as Codex or Claude Code. Default: the runner's `coder` tool with its own default agent, else this agent's own CLI.
+- `items` (ship only): `auto` in a scheduled job (`references/ship-cron.md`); otherwise the owner's own words say which items.
 
 Every message, to the contact or as a GitHub comment, uses its template in `references/messages.md`, named below in quotes ("Build started"). If one cannot be sent, put it in the summary and go on.
 - `dir`: the run's own directory, `~/.factory/<OWNER>/<REPO>/<run>`, created when missing. It holds the run's clone (`clone/`), its lock (`lock/`) and its worktrees. Each run has its own, so a build and a review can run at once without touching each other's files.
@@ -59,7 +60,7 @@ The board is the `.factory/` folder on the branch `factory_board`: an orphan bra
   stop/          parked by the owner; ignore
 ```
 
-The owner moves items into `backlog/`, `new/` and `stop/`. The manager moves them along `new/ → review/ → ready/ → done/`, back to `backlog/` when an item cannot be built, and wherever the owner says in a ship run.
+The owner moves items into `backlog/`, `new/` and `stop/`. The manager moves them along `new/ → review/ → ready/ → done/`, back to `new/` when a review asks for fixes and rounds remain, back to `review/` when a scheduled ship cannot merge an item, back to `backlog/` when an item cannot be built, and wherever the owner says in a ship run.
 
 `references/factory.toml` is an annotated example of the settings, read at the start of each run:
 
@@ -69,6 +70,8 @@ The owner moves items into `backlog/`, `new/` and `stop/`. The manager moves the
 - `read`: files to read before building or reviewing.
 - `never`: paths the factory must not change.
 - `rules`: extra rules for the coder.
+- `max_rounds`: how many builds an item gets before a P0/P1 review waits for the owner (default `1`: every one waits).
+- `ship`: the actions a ship takes, in order, from `merge`, `tag` and `push` (default all three).
 - `prefix`: capital letters put before item numbers (default `FT`).
 - `timezone`: the clock for section times and the board page, such as `Asia/Tokyo` (default: the machine's).
 
@@ -124,6 +127,7 @@ Every board change is a commit on `factory_board` in `repo` that touches only `.
    - `repo` not on `factory_board`: `git checkout factory_board`. Uncommitted changes: `git stash push --include-untracked -m "factory: left by a stopped run <time>"`.
    - Local commits on `factory_board` not on `origin/factory_board`: `git update-ref refs/factory/stopped/<YYYYMMDD-HHMM> factory_board`, then `git reset --hard origin/factory_board` after the fetch below.
    - Worktrees: build keeps its item worktrees (a stopped build goes on there; see Build, step 2). Review and ship remove theirs (`git worktree remove --force`, then `git worktree prune`), first keeping ship's unpushed merge commits as a `refs/factory/stopped/…` ref.
+   - Ship: local tags that origin does not have (`git ls-remote --tags origin`) were made by a stopped ship: `git tag -d` them.
 3. **Update.** `git fetch origin --prune`. Check out `factory_board` (the first time, `git checkout -b factory_board origin/factory_board`) and fast-forward it. Read `.factory/factory.toml`.
 4. **Number** the files in `backlog/` and `new/` named `<slug>.md`, and any file there whose number another item already has (the older keeps it). Take the next numbers above the highest in every folder, oldest file first; set `source` where it applies. Rename with `git mv` in one board commit, `factory: number <ID> <slug>, …`, and push it before anything else.
 5. Do the run (below).
@@ -160,13 +164,13 @@ An item that does not parse, or that cannot be built at all (it contradicts itse
 
 ## Review
 
-Take one item from `review/`: the oldest by last change whose branch head (`git rev-parse origin/<branch>`) has no review yet (no `factory · review` section with that `head:`). No item: end quietly.
+Take one item from `review/`: the oldest by last change whose branch head (`git rev-parse origin/<branch>`) has no review yet (no `factory · review` section with that `head:`), or which a ship sent back (a `factory` section after its latest review). No item: end quietly.
 
 1. **Tell** the contact ("Review started").
 2. **Worktree** `git worktree add "$dir/review-<ID>" <branch>`, tracking `origin/<branch>`.
-3. **Conflicts.** If the branch does not merge cleanly with `origin/<base>`, have the coder merge `origin/<base>` into it and resolve the conflicts (rules as in Build, step 4), verify as in Build, step 6, push the branch, tell the contact ("Conflict resolved"), and review the new head.
+3. **Conflicts.** If the branch does not merge cleanly with `origin/<base>`, or a ship sent it back, have the coder merge `origin/<base>` into it, resolve the conflicts and fix the failure the ship's section names (rules as in Build, step 4), verify as in Build, step 6, push the branch, tell the contact ("Conflict resolved"), and review the new head.
 4. **Coder review.** Run the coder in the worktree with the review-code skill when it has one, on `origin/<base>...HEAD`, against the item's request and plan. It may install what it needs to build and test (as in Build, step 4), and must run `test`; a failing test is a P1 finding. It changes no files, makes no commits, and does not push, fetch or run `gh`. It reports each finding as `[P0|P1|P2|P3] file:line: what is wrong and what to change`. Tell the contact about installs as in Build, step 5.
-5. **Board.** Append one section and, in the same board commit, move the item to `ready/` when the verdict is `pass`. Push it.
+5. **Board.** Append one section and, in the same board commit, move the item: to `ready/` when the verdict is `pass`; to `new/` when it is `fix` and the header's `round` is below `max_rounds`. Push it.
 
    ```markdown
    ## factory · review · 2026-11-05 10:00
@@ -178,25 +182,35 @@ Take one item from `review/`: the oldest by last change whose branch head (`git 
    - [P3] src/sync.go:120: the retry delay never grows.
    ```
 
-   `verdict: fix` when there is any P0 or P1 finding; only those go under `fix:`. Leave out empty lists. A `fix` item stays in `review/`: the owner decides, and sends it back to `new/` with a note when it should be fixed.
+   `verdict: fix` when there is any P0 or P1 finding; only those go under `fix:`. Leave out empty lists. A `fix` item sent to `new/` gets its next build as a fix round, which fixes the `fix:` list. A `fix` item at `max_rounds` stays in `review/`: the owner decides, and sends it back to `new/` with a note when it should be fixed.
 6. **GitHub.** Comment on each linked issue and PR, `gh issue comment <N>` or `gh pr comment <N>`, with "Review comment on a linked issue or PR". A refused comment goes in the summary; it does not stop the run.
-7. **Tell** the contact ("Passed", or "Needs fixes").
+7. **Tell** the contact ("Passed", "Sent back for fixes", or "Needs fixes").
 
 ## Ship
 
-The owner says, in their own words, what to do with the items in `ready/`: all fine, or which are fine and which go back to `new/` or `backlog/`, and why. Ask only when it is not clear which items they mean. Items they do not mention stay in `ready/`.
+A ship takes items from `ready/` through the actions in `ship`, in this order: `merge` (into `base`, tested), `tag` (the merged `base`) and `push` (`base` and the tag; then the items move to `done/`). Default: all three. Which items it takes:
 
-1. **Send back** each item the owner names, to `new/` or `backlog/`, with a section signed with the owner's name holding their words as they gave them; the next build of a `new/` item fixes it on the same branch. One board commit, pushed.
-2. **Merge** the fine items into `base`, in a worktree: `git worktree add -B <base> "$dir/base" origin/<base>`. For each item, oldest ID first: `git merge --no-ff --no-edit -m "Merge <ID>: <title>" origin/<branch>`. On a conflict, have the coder resolve it in that worktree and finish the merge commit (rules as in Build, step 4; it resolves the conflict and adds nothing else). An item it cannot resolve: `git merge --abort`, tell the contact ("Merge conflict not resolved"), and leave the item in `ready/`.
-3. **Test** the merged `base`: `after_change` when needed, then `test`. If it fails, have the coder fix it with one more commit, and test again. Still failing: push nothing, tell the contact ("Tests failing on base"), and leave the items in `ready/`.
-4. **Push** `git push origin <base>`. If refused because `base` moved: `git pull --no-rebase origin <base>`, test again, push again, at most three times.
+- **Asked.** The owner says, in their own words, what to do with the items in `ready/`: all fine, or which are fine and which go back to `new/` or `backlog/`, and why. Ask only when it is not clear which items they mean. Items they do not mention stay in `ready/`.
+- **Scheduled** (`items: auto`). Every item in `ready/` that is still fine: its latest `factory · review` section has `verdict: pass` and the `head:` of `git rev-parse origin/<branch>`, and no owner section follows it (an owner's note waits for the owner). The others stay in `ready/` and are named in the summary. No such item, or no `merge` in `ship`: end quietly.
+
+1. **Send back** (asked) each item the owner names, to `new/` or `backlog/`, with a section signed with the owner's name holding their words as they gave them; the next build of a `new/` item fixes it on the same branch. One board commit, pushed. Without `merge` in `ship`, the run ends here.
+2. **Merge** the items into `base`, in a worktree: `git worktree add -B <base> "$dir/base" origin/<base>`. For each item, oldest ID first, note `HEAD`, then `git merge --no-ff --no-edit -m "Merge <ID>: <title>" origin/<branch>`, `after_change` when needed, and `test`.
+   - Asked: on a conflict, have the coder resolve it in that worktree and finish the merge commit (rules as in Build, step 4; it resolves the conflict and adds nothing else). On a failing test, have the coder fix it with one more commit, and test again. An item it cannot resolve: `git merge --abort`, tell the contact ("Merge conflict not resolved"); still failing: `git reset --hard` to the noted `HEAD`, tell the contact ("Tests failing on base"). Either way the item stays in `ready/`.
+   - Scheduled: the coder fixes nothing. On a conflict, `git merge --abort`; on a failing test, `git reset --hard` to the noted `HEAD`. The item goes back to `review/` (step 6) with a `factory` section naming the conflicting files or quoting the failing test, and `base`'s head; the next review merges `base` into the branch and fixes it.
+
+   No item merged: remove the worktree and end the run.
+3. **Tag** (with `tag`). `git fetch origin --tags`. Take the highest tag of the form `vMAJOR.MINOR.PATCH` (`git tag --list 'v*' --sort=-v:refname`, skipping any of another form) and add one to its patch: `v1.4.2` gives `v1.4.3`; with none, `v0.1.0`. Tag the merged `base`: `git tag -a <tag> -m "<tag>: <ID> <title>, …"`. Never move, replace or delete a tag that exists.
+4. **Push** (with `push`) `git push --atomic origin <base> refs/tags/<tag>` (without `tag`, just `<base>`). If refused because `base` moved: `git tag -d <tag>`, `git pull --no-rebase origin <base>`, test again, tag again (step 3), push again, at most three times. If refused because the tag exists: take the next one (step 3) and push again.
+
+   Without `push`, push nothing and move nothing: put in the summary what would have shipped, under which tag, and what would have gone back; remove the worktree and local tag, and end the run.
 5. **GitHub.** For each merged item, close each linked issue and PR that is still open, with "Close comment": `gh issue close <N> --comment "…"` or `gh pr close <N> --comment "…"`. Skip what is already closed. Never delete a branch.
-6. **Board.** In one board commit, move each merged item to `done/` with a section: the merge commit, and what was closed, already closed or refused. Push it. Remove the items' worktrees in the build and review directories when they are there.
-7. **Tell** the contact, per item: "Merged" or "Sent back"; those left in `ready/` were told above.
+6. **Board.** In one board commit, move each merged item to `done/` with a section: the merge commit, the tag, and what was closed, already closed or refused; and, in a scheduled ship, each item that did not merge back to `review/` with its section. Push it. Remove the merged items' worktrees in the build and review directories when they are there.
+7. **Tell** the contact, per item: "Merged", "Sent back" or "Back to review"; those left in `ready/` were told above.
 
 ## Never
 
-- Push to `base` outside a ship run, merge into `base` anything but the items the owner called fine, force-push, or rewrite history others have.
+- Push to `base` outside a ship run, merge into `base` anything but the items the owner called fine or a scheduled ship found fine, force-push, or rewrite history others have.
+- Push a tag outside a ship run, or move, replace or delete a tag.
 - Commit to `factory_board` anything outside `.factory/`, or merge `factory_board` anywhere.
 - Move an item out of `done/`, into or out of `stop/`, into `backlog/` except as Build and Untrusted text say, or into `done/` except by a ship run; delete items or branches.
 - Edit an earlier section, or sign a section with an owner's name except their own words in a ship run.

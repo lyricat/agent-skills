@@ -47,6 +47,23 @@ rules = [
   "Scripted tests get a throwaway HOME.",
 ]
 
+# How many builds an item gets. A review that finds P0 or P1 sends the
+# item back to new/ for a fix round while its round is below this; at
+# the limit it stays in review/ and you decide. Default: 1 (every P0/P1
+# review waits for you).
+max_rounds = 3
+
+# What a ship does with the items it takes, in this order:
+#   merge  merge each item into base and run test on the result
+#   tag    tag the merged base with the next version: v1.4.2, then v1.4.3
+#          (v0.1.0 when there is no vX.Y.Z tag yet)
+#   push   push base and the tag, close linked issues and PRs, and move
+#          the items to done/
+# Leave out tag to ship without tags. Without push, a ship only checks
+# that the items merge and pass, and says so; nothing is pushed or moved.
+# [] stops ships from merging anything. Default: all three.
+ship = ["merge", "tag", "push"]
+
 # Capital letters before item numbers: FT16 in file names, branches and
 # messages, so they are not mistaken for issue or PR numbers. Default: FT.
 prefix = "FT"

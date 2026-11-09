@@ -18,13 +18,15 @@ Placeholders:
 | `{id}`, `{title}` | the item's ID and title |
 | `{branch}` | the item's branch |
 | `{link}` | the branch on GitHub: `https://github.com/OWNER/REPO/compare/<base>...<branch>` |
-| `{round}` | the fix round number |
+| `{round}` | the item's round: how many builds it has had |
+| `{max}` | `max_rounds` |
 | `{base}` | the base branch |
 | `{folder}` | the folder an item went to |
 | `{run}` | `build`, `review` or `ship` |
 | `{verdict}` | `pass` or `fix` |
 | `{what happened}` | the item's move or result, in a few words |
 | `{sha}` | a short commit hash |
+| `{tag}` | the tag a ship made |
 | `{source}` | the linked GitHub issue or PR, such as `issue #47` |
 | `{reason}` | why, in a sentence |
 | `{test}` | the failing test, one line |
@@ -140,14 +142,26 @@ Review passed. Now in `ready/`.
 [Read the branch]({link})
 ```
 
+### Sent back for fixes
+
+When rounds remain. For each P0 and P1 finding:
+
+```markdown
+🔁 {repo}
+**{id} {title}**
+Review found P0/P1 in round {round} of {max}; back in `new/`, the next build fixes it.
+- {finding}
+[Read the branch]({link})
+```
+
 ### Needs fixes
 
-For each P0 and P1 finding:
+At `max_rounds`. For each P0 and P1 finding:
 
 ```markdown
 ⛔ {repo}
 **{id} {title}**
-Review found P0/P1; it stays in `review/` for you to decide.
+Review found P0/P1 in round {round} of {max}; it stays in `review/` for you to decide.
 - {finding}
 To fix it: add a note and move it to `new/`.
 [Read the branch]({link})
@@ -161,6 +175,7 @@ To fix it: add a note and move it to `new/`.
 ✅ {repo}
 **{id} {title}**
 Merged into `{base}` at `{sha}`. Now in `done/`.
+Tagged: `{tag}`
 Closed: {source}
 ```
 
@@ -170,6 +185,16 @@ Closed: {source}
 ⚠️ {repo}
 **{id} {title}**
 Back in `{folder}` with your note.
+```
+
+### Back to review
+
+A scheduled ship, when the item conflicts with `base` or fails its tests there:
+
+```markdown
+⚠️ {repo}
+**{id} {title}**
+Not shipped: {reason}. Back in `review/`; the next review merges `{base}` and fixes it.
 ```
 
 ### Merge conflict not resolved
@@ -185,8 +210,8 @@ Conflicts with `{base}` the coder could not resolve; still in `ready/`.
 
 ```markdown
 ⛔ {repo}
-**Ship stopped**
-tests fail on the merged `{base}`; nothing pushed, the items stay in `ready/`.
+**{id} {title}**
+Tests fail on `{base}` with this item merged, even after a fix; not shipped, still in `ready/`.
 `{test}`
 ```
 
@@ -229,4 +254,5 @@ Factory review of **{id}** on `{branch}` (`{sha}`): **{verdict}**
 
 ```markdown
 Done in **{id}**: merged into `{base}` at `{sha}`.
+Released in `{tag}`.
 ```

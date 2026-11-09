@@ -185,7 +185,7 @@ details .box, details .tablewrap { background: var(--bg); }
         <path class="edge" d="M400 104 L478 104" marker-end="url(#af)"/>
         <text class="elabel" x="439" y="96" text-anchor="middle">no P0/P1</text>
         <path class="edge you" d="M320 80 Q 250 30 180 80" marker-end="url(#ay)"/>
-        <text class="elabel" x="250" y="34" text-anchor="middle">P0/P1: you send it back</text>
+        <text class="elabel" x="250" y="34" text-anchor="middle">P0/P1: rounds left, or you</text>
         <path class="edge you" d="M520 80 Q 360 -10 200 82" marker-end="url(#ay)"/>
         <text class="elabel" x="470" y="22" text-anchor="middle">ship: not ok</text>
         <path class="edge" d="M590 104 L668 104" marker-end="url(#af)"/>
@@ -208,7 +208,7 @@ details .box, details .tablewrap { background: var(--bg); }
         <g class="dir"><rect x="290" y="210" width="110" height="48"/><text x="345" y="234">stop/</text></g>
       </svg>
     </div>
-    <p>Orange folders wait for you: <code>review/</code> only after a P0/P1 review, <code>ready/</code> until you ship.</p>
+    <p>Orange folders wait for you: <code>review/</code> only after a P0/P1 review in the last round (<code>max_rounds</code>), <code>ready/</code> until you ship, unless a ship job ships it for you.</p>
   </section>
 
   <section aria-labelledby="runs-h">
@@ -294,8 +294,9 @@ details .box, details .tablewrap { background: var(--bg); }
         <text class="st-t" x="422.0" y="406.0">Any P0 or P1?</text>
         <path class="flow side" d="M520 402.0 L538 402.0"/>
         <text class="yn" x="523" y="414.0">yes</text>
-        <text class="side-t" x="544" y="389">stays in review/;</text>
-        <text class="side-t" x="544" y="402">you decide</text>
+        <text class="side-t" x="544" y="389">rounds left: back</text>
+        <text class="side-t" x="544" y="402">to new/; else stays,</text>
+        <text class="side-t" x="544" y="415">you decide</text>
         <text class="yn" x="428.0" y="437">no</text>
         <path class="flow" d="M422.0 424 L422.0 440" marker-end="url(#rf)"/>
         <rect class="st m" x="324" y="442" width="196" height="44" rx="4"/>
@@ -303,10 +304,10 @@ details .box, details .tablewrap { background: var(--bg); }
         <text class="st-n" x="422.0" y="475">push factory_board</text>
         <use href="#msg" x="512" y="434" width="18" height="16"/>
         <text class="rhead" x="642" y="22">Ship</text>
-        <text class="rsub" x="642" y="40">when you say so</text>
+        <text class="rsub" x="642" y="40">when you say so, or cron</text>
         <rect class="st you" x="642" y="70" width="196" height="44" rx="4"/>
         <text class="st-t" x="740.0" y="88">You check ready/</text>
-        <text class="st-n" x="740.0" y="103">“FT12 fine, FT13 back to new”</text>
+        <text class="st-n" x="740.0" y="103">cron: each whose review holds</text>
         <path class="flow" d="M740.0 114 L740.0 130" marker-end="url(#rf)"/>
         <rect class="st m" x="642" y="132" width="196" height="44" rx="4"/>
         <text class="st-t" x="740.0" y="150">Send back the rest</text>
@@ -321,8 +322,8 @@ details .box, details .tablewrap { background: var(--bg); }
         <path class="flow side" d="M838 278.0 L856 278.0"/>
         <text class="yn" x="841" y="290.0">yes</text>
         <text class="side-t" x="862" y="265">coder resolves;</text>
-        <text class="side-t" x="862" y="278">can&#x27;t: stays</text>
-        <text class="side-t" x="862" y="291">in ready/</text>
+        <text class="side-t" x="862" y="278">cron: back to</text>
+        <text class="side-t" x="862" y="291">review/</text>
         <text class="yn" x="746.0" y="313">no</text>
         <path class="flow" d="M740.0 300 L740.0 316" marker-end="url(#rf)"/>
         <polygon class="st d" points="740.0,318 838.0,340.0 740.0,362 642.0,340.0"/>
@@ -330,12 +331,12 @@ details .box, details .tablewrap { background: var(--bg); }
         <path class="flow side" d="M838 340.0 L856 340.0"/>
         <text class="yn" x="841" y="352.0">no</text>
         <text class="side-t" x="862" y="327">coder fixes;</text>
-        <text class="side-t" x="862" y="340">still failing:</text>
-        <text class="side-t" x="862" y="353">push nothing</text>
+        <text class="side-t" x="862" y="340">cron: back to</text>
+        <text class="side-t" x="862" y="353">review/</text>
         <text class="yn" x="746.0" y="375">yes</text>
         <path class="flow" d="M740.0 362 L740.0 378" marker-end="url(#rf)"/>
         <rect class="st m" x="642" y="380" width="196" height="44" rx="4"/>
-        <text class="st-t" x="740.0" y="398">Push master</text>
+        <text class="st-t" x="740.0" y="398">Tag, push master</text>
         <text class="st-n" x="740.0" y="413">close linked issues and PRs</text>
         <path class="flow" d="M740.0 424 L740.0 440" marker-end="url(#rf)"/>
         <rect class="st m" x="642" y="442" width="196" height="44" rx="4"/>
@@ -345,7 +346,7 @@ details .box, details .tablewrap { background: var(--bg); }
       </svg>
 
     </div>
-    <p>Nobody waits for an answer: the coder decides what the request leaves open, and the manager tells you as it goes. A P0/P1 item is fixed when you add a note and move it back to <code>new/</code>.</p>
+    <p>Nobody waits for an answer: the coder decides what the request leaves open, and the manager tells you as it goes. A P0/P1 item goes back to <code>new/</code> for another build while it has rounds left (<code>max_rounds</code>); after that, it is fixed when you add a note and move it back to <code>new/</code>.</p>
   </section>
 
   <section aria-labelledby="branch-h">
@@ -409,7 +410,8 @@ details .box, details .tablewrap { background: var(--bg); }
           <tr><td>Add a feature or issue</td><td>a file in <code>.factory/new/</code>, push</td></tr>
           <tr><td>Keep an idea for later</td><td>a file in <code>.factory/backlog/</code>, push; <code>git mv</code> it to <code>new/</code> when it should be built</td></tr>
           <tr><td>Fix after a P0/P1 review</td><td>a note at the end of its file, <code>git mv</code> it to <code>new/</code>, push</td></tr>
-          <tr><td>Accept builds</td><td>tell the manager which <code>ready/</code> items are fine (or all); it merges them</td></tr>
+          <tr><td>Accept builds</td><td>tell the manager which <code>ready/</code> items are fine (or all); it merges, tags and pushes them</td></tr>
+          <tr><td>Ship without asking</td><td>schedule the ship job (<code>ship-cron.md</code>); hold an item back with a note or <code>stop/</code></td></tr>
           <tr><td>Reject a ready build</td><td>tell the manager to send it to <code>new/</code> (with what to change) or <code>backlog/</code></td></tr>
           <tr><td>Pause or resume</td><td><code>git mv</code> to <code>stop/</code>, or back to <code>new/</code>, push</td></tr>
         </tbody>
@@ -520,7 +522,7 @@ notes:
       <ul class="notes">
         <li><b>head</b><span>The commit reviewed. A new commit (a fix round, a merge of <code>master</code>) gets a new review.</span></li>
         <li><b>verdict: pass</b><span>No P0 or P1: the item moves to <code>ready/</code> in the same run.</span></li>
-        <li><b>verdict: fix</b><span>The item stays in <code>review/</code> and you decide. The next build after you move it to <code>new/</code> fixes the <code>fix:</code> list; <code>notes:</code> are for you.</span></li>
+        <li><b>verdict: fix</b><span>While its round is below <code>max_rounds</code>, the item goes back to <code>new/</code> and the next build fixes the <code>fix:</code> list. In the last round it stays in <code>review/</code> and you decide. <code>notes:</code> are for you.</span></li>
         <li><b>Tests</b><span>A failing test is a P1 finding, including one the build couldn't fix.</span></li>
       </ul>
     </div>
@@ -542,6 +544,9 @@ notes:
   "Scripted tests get a throwaway HOME.",
 ]
 
+<span class="y">max_rounds</span> = 3
+<span class="y">ship</span> = ["merge", "tag", "push"]
+
 <span class="y">prefix</span> = "FT"
 <span class="y">timezone</span> = "Europe/Berlin"</pre>
       </div>
@@ -552,6 +557,8 @@ notes:
         <li><b>after_change</b><span>Commands to run when generated files need updating, such as compiled layouts or translation catalogs.</span></li>
         <li><b>read</b><span>Files the agent reads before it builds or reviews: your conventions, architecture, design rules.</span></li>
         <li><b>never</b><span>Paths the agent must not change, on any branch. A build that touches one is undone.</span></li>
+        <li><b>max_rounds</b><span>How many builds an item gets. A P0/P1 review sends it back to <code>new/</code> until then; default 1, so every one waits for you.</span></li>
+        <li><b>ship</b><span>What a ship does: merge into <code>base</code>, tag the next <code>vX.Y.Z</code>, push both. Drop <code>tag</code> for no tags, <code>push</code> for a dry run.</span></li>
         <li><b>rules</b><span>Extra instructions for the coder in this repository, on top of the general ones: what not to touch on this machine, how to test safely.</span></li>
       </ul>
     </div>
@@ -561,14 +568,14 @@ notes:
       <table>
         <thead><tr><th>Path</th><th>Who</th><th>What they do there</th></tr></thead>
         <tbody>
-          <tr><td class="path">master</td><td><span class="chip h">human</span><span class="chip a">agent</span></td><td>The agent pushes only in a ship, merging the items you called fine. Otherwise yours.</td></tr>
+          <tr><td class="path">master</td><td><span class="chip h">human</span><span class="chip a">agent</span></td><td>The agent pushes only in a ship, merging the items you called fine or the ship job found fine, with a tag. Otherwise yours.</td></tr>
           <tr><td class="path">factory_board</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The board: only <code>.factory/</code>. Both of you commit here; nobody merges it.</td></tr>
           <tr><td class="path">factory/&lt;ID&gt;-… branches</td><td><span class="chip a">agent</span></td><td>The coder writes the code, fix rounds and conflict merges; the manager pushes.</td></tr>
           <tr><td class="path">.factory/factory.toml</td><td><span class="chip h">human</span></td><td>You set the test command, what to read first, the paths the agent must not touch.</td></tr>
           <tr><td class="path">.factory/backlog/</td><td><span class="chip h">human</span></td><td>Your ideas and unclear requests. The agent numbers them, and moves an item here when it can't be built.</td></tr>
           <tr><td class="path">.factory/new/</td><td><span class="chip h">human</span></td><td>What you want built, from you, the backlog, GitHub, or back from a review. A build takes one at a time.</td></tr>
-          <tr><td class="path">.factory/review/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>Built items. A review takes one at a time; after a P0/P1 review, you move it back to <code>new/</code>.</td></tr>
-          <tr><td class="path">.factory/ready/</td><td><span class="chip a">agent</span></td><td>Reviewed items, for you to check. The manager moves them on when you tell it.</td></tr>
+          <tr><td class="path">.factory/review/</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>Built items. A review takes one at a time; after a P0/P1 review in the last round, you move it back to <code>new/</code>.</td></tr>
+          <tr><td class="path">.factory/ready/</td><td><span class="chip a">agent</span></td><td>Reviewed items, for you to check. The manager moves them on when you tell it, or a ship job does.</td></tr>
           <tr><td class="path">.factory/done/</td><td><span class="chip a">agent</span></td><td>Merged by a ship; linked issues and PRs closed.</td></tr>
           <tr><td class="path">.factory/stop/</td><td><span class="chip h">human</span></td><td>You park a file here, or move it back. The agent ignores this folder.</td></tr>
           <tr><td class="path">header (--- … ---)</td><td><span class="chip a">agent</span></td><td>The GitHub source, the branch name and the fix round count.</td></tr>

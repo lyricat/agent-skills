@@ -1,12 +1,12 @@
 # Sample prompt: the review job
 
-A scheduled job in which the manager runs one factory **review**: it takes one item from `review/`, has the coder review its branch, records the review in the item and on the linked GitHub issue or PR, and moves the item to `ready/` when there is no P0 or P1 finding. With one, the item stays in `review/` and you decide: send it back to `new/` with a note to have it fixed.
+A scheduled job in which the manager runs one factory **review**: it takes one item from `review/`, has the coder review its branch, records the review in the item and on the linked GitHub issue or PR, and moves the item to `ready/` when there is no P0 or P1 finding. With one, the item goes back to `new/` for a fix round while its round is below `max_rounds` in `.factory/factory.toml`; at the limit it stays in `review/` and you decide: send it back to `new/` with a note to have it fixed.
 
 Before using it:
 
 - `gh` must act on the repository with the rights in `github-app.md`, including Issues and Pull requests: write for the comments. The job keeps its own clone in `~/.factory/OWNER/REPO/review/clone`.
 - The coder should have the review-code skill; it reviews without it, less thoroughly.
-- Schedule it every 30 minutes or so, beside the build job (`build-cron.md`). A run reviews one item.
+- Schedule it every 30 minutes or so, beside the build job (`build-cron.md`) and the ship job (`ship-cron.md`). A run reviews one item.
 
 ## The prompt
 
