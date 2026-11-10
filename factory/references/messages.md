@@ -233,7 +233,7 @@ Factory {run} run stopped: the remote refused `{ref}` ({reason}). Check the GitH
 
 ### Summary
 
-At the end of a run, when anything happened. One line per item, those waiting for you first:
+At the end of a run that built, reviewed, shipped or moved an item. Never send it when there was nothing to do. One line per item, those waiting for you first:
 
 ```markdown
 🏭 {repo}

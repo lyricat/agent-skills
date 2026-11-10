@@ -27,7 +27,7 @@ The task gives these; otherwise use the defaults:
 - `coder`: which coding agent to call, such as Codex or Claude Code. Default: the runner's `coder` tool with its own default agent, else this agent's own CLI.
 - `items` (ship only): `auto` in a scheduled job (`references/ship-cron.md`); otherwise the owner's own words say which items.
 
-Every message, to the contact or as a GitHub comment, uses its template in `references/messages.md`, named below in quotes ("Build started"). If one cannot be sent, put it in the summary and go on.
+Every message, to the contact or as a GitHub comment, uses its template in `references/messages.md`, named below in quotes ("Build started"). If one cannot be sent, put it in the summary and go on. Send only those messages, at the step that names them. Never tell the contact that there is nothing to do, that a run started or found no item, or that the board is unchanged.
 - `dir`: the run's own directory, `~/.factory/<OWNER>/<REPO>/<run>`, created when missing. It holds the run's clone (`clone/`), its lock (`lock/`) and its worktrees. Each run has its own, so a build and a review can run at once without touching each other's files.
 - `repo`: the run's clone, `$dir/clone`, made with `gh repo clone "$REPO" "$dir/clone"` the first time. Never use anyone's working copy. Its own checkout holds `factory_board`; code work happens in worktrees.
 
@@ -121,7 +121,7 @@ Every board change is a commit on `factory_board` in `repo` that touches only `.
 
 ## Each run
 
-1. **Lock.** `mkdir -p "$dir" && mkdir "$dir/lock"`. If it exists and was touched in the last 10 minutes, the same run is already going: stop. If older, take it over. `touch` it at each step and just before and after each coder call; remove it when the run ends, also on failure.
+1. **Lock.** `mkdir -p "$dir" && mkdir "$dir/lock"`. If it exists and was touched in the last 10 minutes, the same run is already going: stop, and send the contact nothing. If older, take it over. `touch` it at each step and just before and after each coder call; remove it when the run ends, also on failure.
 2. **Recover.** Anything left in `repo` or `dir` was left by a run that stopped. Clear it, keeping a copy, and say so in the summary:
    - An unfinished rebase or merge, in `repo` or a worktree: abort it.
    - `repo` not on `factory_board`: `git checkout factory_board`. Uncommitted changes: `git stash push --include-untracked -m "factory: left by a stopped run <time>"`.
@@ -131,11 +131,11 @@ Every board change is a commit on `factory_board` in `repo` that touches only `.
 3. **Update.** `git fetch origin --prune`. Check out `factory_board` (the first time, `git checkout -b factory_board origin/factory_board`) and fast-forward it. Read `.factory/factory.toml`.
 4. **Number** the files in `backlog/` and `new/` named `<slug>.md`, and any file there whose number another item already has (the older keeps it). Take the next numbers above the highest in every folder, oldest file first; set `source` where it applies. Rename with `git mv` in one board commit, `factory: number <ID> <slug>, …`, and push it before anything else.
 5. Do the run (below).
-6. **End.** Release the lock and end with a short summary ("Summary"): the items touched, each move, every install, and what the owner should look at.
+6. **End.** Release the lock. If the run built, reviewed, shipped or moved an item, send the summary ("Summary"): the items touched, each move, every install, and what the owner should look at. Otherwise send the contact nothing, not even a summary; recovery and numbering go only in the run's own output.
 
 ## Build
 
-Take one item from `new/`: the oldest by last change (`git log -1 --format=%ct -- <file>`), skipping one whose worktree is busy (a file in `$dir/<ID>-<slug>` changed in the last 10 minutes: another build still runs there). No item: end quietly.
+Take one item from `new/`: the oldest by last change (`git log -1 --format=%ct -- <file>`), skipping one whose worktree is busy (a file in `$dir/<ID>-<slug>` changed in the last 10 minutes: another build still runs there). No item: release the lock and stop. Send the contact nothing.
 
 An item that does not parse, or that cannot be built at all (it contradicts itself, or needs access, hardware or a service the factory does not have), moves to `backlog/` with a section saying why. Tell the contact ("Moved to backlog"), and take the next item from `new/` instead.
 
@@ -164,7 +164,7 @@ An item that does not parse, or that cannot be built at all (it contradicts itse
 
 ## Review
 
-Take one item from `review/`: the oldest by last change whose branch head (`git rev-parse origin/<branch>`) has no review yet (no `factory · review` section with that `head:`), or which a ship sent back (a `factory` section after its latest review). No item: end quietly.
+Take one item from `review/`: the oldest by last change whose branch head (`git rev-parse origin/<branch>`) has no review yet (no `factory · review` section with that `head:`), or which a ship sent back (a `factory` section after its latest review). No item: release the lock and stop. Send the contact nothing.
 
 1. **Tell** the contact ("Review started").
 2. **Worktree** `git worktree add "$dir/review-<ID>" <branch>`, tracking `origin/<branch>`.
@@ -191,7 +191,7 @@ Take one item from `review/`: the oldest by last change whose branch head (`git 
 A ship takes items from `ready/` through the actions in `ship`, in this order: `merge` (into `base`, tested), `tag` (the merged `base`) and `push` (`base` and the tag; then the items move to `done/`). Default: all three. Which items it takes:
 
 - **Asked.** The owner says, in their own words, what to do with the items in `ready/`: all fine, or which are fine and which go back to `new/` or `backlog/`, and why. Ask only when it is not clear which items they mean. Items they do not mention stay in `ready/`.
-- **Scheduled** (`items: auto`). Every item in `ready/` that is still fine: its latest `factory · review` section has `verdict: pass` and the `head:` of `git rev-parse origin/<branch>`, and no owner section follows it (an owner's note waits for the owner). The others stay in `ready/` and are named in the summary. No such item, or no `merge` in `ship`: end quietly.
+- **Scheduled** (`items: auto`). Every item in `ready/` that is still fine: its latest `factory · review` section has `verdict: pass` and the `head:` of `git rev-parse origin/<branch>`, and no owner section follows it (an owner's note waits for the owner). The others stay in `ready/` and are named in the summary. No such item, or no `merge` in `ship`: release the lock and stop. Send the contact nothing.
 
 1. **Send back** (asked) each item the owner names, to `new/` or `backlog/`, with a section signed with the owner's name holding their words as they gave them; the next build of a `new/` item fixes it on the same branch. One board commit, pushed. Without `merge` in `ship`, the run ends here.
 2. **Merge** the items into `base`, in a worktree: `git worktree add -B <base> "$dir/base" origin/<base>`. For each item, oldest ID first, note `HEAD`, then `git merge --no-ff --no-edit -m "Merge <ID>: <title>" origin/<branch>`, `after_change` when needed, and `test`.
