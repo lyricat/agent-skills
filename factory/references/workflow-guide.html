@@ -552,13 +552,13 @@ notes:
       </div>
       <ul class="notes">
         <li><b>base</b><span>Work branches start from the newest <code>base</code>, and a ship merges into it: the only time the agent pushes it.</span></li>
-        <li><b>owners</b><span>The names you sign your sections with. Only their sections are requests, answers and review notes; anyone else's is read as information.</span></li>
+        <li><b>owners</b><span>The names you sign your sections with. Only their sections are requests, answers and review notes; anyone else's is read as information. The agent signs its own as <code>factory</code>; leave that name out.</span></li>
         <li><b>test</b><span>The command that must pass: after each build, in each review, and on <code>base</code> before a ship pushes it.</span></li>
         <li><b>after_change</b><span>Commands to run when generated files need updating, such as compiled layouts or translation catalogs.</span></li>
         <li><b>read</b><span>Files the agent reads before it builds or reviews: your conventions, architecture, design rules.</span></li>
         <li><b>never</b><span>Paths the agent must not change, on any branch. A build that touches one is undone.</span></li>
         <li><b>max_rounds</b><span>How many builds an item gets. A P0/P1 review sends it back to <code>new/</code> until then; default 1, so every one waits for you.</span></li>
-        <li><b>ship</b><span>What a ship does: merge into <code>base</code>, tag the next <code>vX.Y.Z</code>, push both. Drop <code>tag</code> for no tags, <code>push</code> for a dry run.</span></li>
+        <li><b>ship</b><span>What a ship does: merge into <code>base</code>, tag the next <code>vX.Y.Z</code>, push both. Drop <code>tag</code> for no tags, <code>push</code> for a dry run; add <code>clean</code> to delete merged <code>factory/</code> branches.</span></li>
         <li><b>rules</b><span>Extra instructions for the coder in this repository, on top of the general ones: what not to touch on this machine, how to test safely.</span></li>
       </ul>
     </div>
@@ -570,7 +570,7 @@ notes:
         <tbody>
           <tr><td class="path">master</td><td><span class="chip h">human</span><span class="chip a">agent</span></td><td>The agent pushes only in a ship, merging the items you called fine or the ship job found fine, with a tag. Otherwise yours.</td></tr>
           <tr><td class="path">factory_board</td><td><span class="chip a">agent</span><span class="chip h">human</span></td><td>The board: only <code>.factory/</code>. Both of you commit here; nobody merges it.</td></tr>
-          <tr><td class="path">factory/&lt;ID&gt;-… branches</td><td><span class="chip a">agent</span></td><td>The coder writes the code, fix rounds and conflict merges; the manager pushes.</td></tr>
+          <tr><td class="path">factory/&lt;ID&gt;-… branches</td><td><span class="chip a">agent</span></td><td>The coder writes the code, fix rounds and conflict merges; the manager pushes. With <code>clean</code>, a ship deletes them once merged.</td></tr>
           <tr><td class="path">.factory/factory.toml</td><td><span class="chip h">human</span></td><td>You set the test command, what to read first, the paths the agent must not touch.</td></tr>
           <tr><td class="path">.factory/backlog/</td><td><span class="chip h">human</span></td><td>Your ideas and unclear requests. The agent numbers them, and moves an item here when it can't be built.</td></tr>
           <tr><td class="path">.factory/new/</td><td><span class="chip h">human</span></td><td>What you want built, from you, the backlog, GitHub, or back from a review. A build takes one at a time.</td></tr>

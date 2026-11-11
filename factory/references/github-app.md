@@ -29,7 +29,7 @@ No account or organization permissions are needed, and the App needs no webhook.
 Set rules on the repository (Settings → Rules → Rulesets) so that the server also enforces what the skill forbids. Bypass works per ruleset, so keep these separate.
 
 1. **`base` only by ship.** A ship run merges into `base` and pushes it, so if `base` requires pull requests or status checks, add the App to that ruleset's bypass list. A ship also pushes a `vX.Y.Z` tag (unless `ship` in `factory.toml` leaves out `tag`): if a tag ruleset restricts creating such tags, add the App to its bypass list too, but keep "Restrict updates" and "Restrict deletions" on tags without bypass. Build and review runs never push `base`; the skill enforces that, not the server. Do not require signed commits on `base`, `factory_board` or `factory/**`: the factory's commits are unsigned.
-2. **No force-push, no deletion.** A ruleset targeting `base`, `factory_board` and `factory/**` with "Block force pushes" and "Restrict deletions", with no bypass for the App.
+2. **No force-push, no deletion.** A ruleset targeting `base`, `factory_board` and `factory/**` with "Block force pushes", and "Restrict deletions" on `base` and `factory_board`, with no bypass for the App. With `clean` in `ship`, a ship deletes merged `factory/` branches: keep "Restrict deletions" for `factory/**` in a ruleset of its own, with the App on its bypass list. Without `clean`, add `factory/**` to the first one.
 3. **Protected paths** (push rulesets, where the plan offers them). Restrict file paths such as `.factory/factory.toml` and `.github/**`, with no bypass for the App. A push ruleset applies to every branch, so it cannot say "only `.factory/` on `factory_board`"; the skill's own check (Writing to the board, step 4) covers that.
 
 Do not require linear history on `base` or `factory/**`: a ship merges with merge commits, and builds merge `base` into a branch.
@@ -50,5 +50,6 @@ From a throwaway clone, as the App:
 - `git push` of a merge commit to `base`: accepted.
 - `git push` of a new `v*` tag: accepted (delete the test tag afterwards, as yourself).
 - `git push --force` to `base`, `factory_board` or a `factory/` branch: refused.
+- `git push origin --delete` of `base` or `factory_board`: refused. Of a test `factory/` branch: accepted with `clean` in `ship`, refused without.
 - A push that changes `.github/workflows/`: refused.
 - With the stricter setup above: `git push` from a build worktree with the coding agent's environment fails for lack of credentials.

@@ -44,7 +44,7 @@ base = "develop"
 
 ```toml
 max_rounds = 3                       # 默认 1：每次 P0/P1 审查都等所有者决定
-ship = ["merge", "tag", "push"]      # 默认值；去掉 tag 不打标签，去掉 push 只检查不推送
+ship = ["merge", "tag", "push"]      # 默认值；去掉 tag 不打标签，去掉 push 只检查不推送；加上 clean 删除已合并的 factory/ 分支
 ```
 
 新标签在最高的 `vX.Y.Z` 标签上把补丁号加一，没有时从 `v0.1.0` 开始。全部配置项见 [`factory.toml`](factory/references/factory.toml)。

@@ -2,7 +2,7 @@
 
 A scheduled job in which the manager runs one factory **ship** on its own: it takes every item in `ready/` whose passing review still matches its branch, merges them into `base` one by one with the tests run after each, tags the result and pushes `base` and the tag. The items move to `done/`, and their linked issues and PRs are closed. An item that conflicts with `base` or fails its tests there goes back to `review/`, where the next review merges `base` into it and fixes it.
 
-The actions come from `ship` in `.factory/factory.toml`, by default `["merge", "tag", "push"]`. Leave out `tag` to ship without tags; leave out `push` for a dry run that only reports what would ship. You can still ship by hand, in your own words, beside this job.
+The actions come from `ship` in `.factory/factory.toml`, by default `["merge", "tag", "push"]`. Leave out `tag` to ship without tags; leave out `push` for a dry run that only reports what would ship; add `clean` to delete merged `factory/` branches. You can still ship by hand, in your own words, beside this job.
 
 Before using it:
 

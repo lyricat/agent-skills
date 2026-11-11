@@ -26,7 +26,8 @@ base = "master"
 
 # Names whose "## name · time" sections count as yours: requests,
 # answers and notes. Sections by other names are read as
-# information only.
+# information only. The manager signs its own sections "factory";
+# leave that name out.
 owners = ["alex"]
 
 # What must pass: after each build, in each review, and on base before
@@ -59,9 +60,12 @@ max_rounds = 3
 #          (v0.1.0 when there is no vX.Y.Z tag yet)
 #   push   push base and the tag, close linked issues and PRs, and move
 #          the items to done/
+#   clean  after push, delete the factory/ branches of items in done/
+#          that are merged into base (needs the branch rules in
+#          github-app.md to allow it)
 # Leave out tag to ship without tags. Without push, a ship only checks
 # that the items merge and pass, and says so; nothing is pushed or moved.
-# [] stops ships from merging anything. Default: all three.
+# [] stops ships from merging anything. Default: merge, tag and push.
 ship = ["merge", "tag", "push"]
 
 # Capital letters before item numbers: FT16 in file names, branches and
