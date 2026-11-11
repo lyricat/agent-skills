@@ -31,7 +31,8 @@ base = "master"
 owners = ["alex"]
 
 # What must pass: after each build, in each review, and on base before
-# a ship run pushes it.
+# a ship run pushes it. A ship runs only each item's own tests after its
+# merge, and this command once after the last.
 test = "make test"
 
 # Run after changes that need generated files or catalogs updated.
