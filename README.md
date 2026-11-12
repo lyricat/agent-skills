@@ -40,11 +40,12 @@
 base = "develop"
 ```
 
-`base` 对整个仓库生效，不能为单个条目另行指定。修复轮次和 ship 动作也在这里设置：
+`base` 对整个仓库生效，不能为单个条目另行指定。修复轮次、ship 动作和看板形式也在这里设置：
 
 ```toml
 max_rounds = 3                       # 默认 1：每次 P0/P1 审查都等所有者决定
 ship = ["merge", "tag", "push"]      # 默认值；去掉 tag 不打标签，去掉 push 只检查不推送；加上 clean 删除已合并的 factory/ 分支
+board = "web"                        # 默认值；web 由 board-pages.yml 发布到 GitHub Pages，text 由 factory 写入 .factory/board.txt，off 都不生成
 ```
 
 新标签在最高的 `vX.Y.Z` 标签上把补丁号加一，没有时从 `v0.1.0` 开始。全部配置项见 [`factory.toml`](factory/references/factory.toml)。

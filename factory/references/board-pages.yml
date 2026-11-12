@@ -1,5 +1,6 @@
 # .github/workflows/board.yml on the factory_board branch: publish the board
-# as a GitHub Pages site, rebuilt on every push to factory_board.
+# as a GitHub Pages site, rebuilt on every push to factory_board while
+# factory.toml has board = "web" (the default).
 #
 # Anyone who can open the site sees every item: titles, threads, review
 # findings, branch names. On most plans a Pages site is public even when the
@@ -48,9 +49,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # board.py reads the history for when items moved
-      - run: mkdir site && python3 .factory/board.py . -o site/index.html
-      - uses: actions/upload-pages-artifact@v3
+      - id: mode
+        run: python3 -c 'import tomllib; print("board=" + tomllib.load(open(".factory/factory.toml", "rb")).get("board", "web"))' >> "$GITHUB_OUTPUT"
+      - if: steps.mode.outputs.board == 'web'
+        run: mkdir site && python3 .factory/board.py . -o site/index.html
+      - if: steps.mode.outputs.board == 'web'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: site
       - id: deploy
+        if: steps.mode.outputs.board == 'web'
         uses: actions/deploy-pages@v4

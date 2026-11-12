@@ -47,11 +47,12 @@ The coder gets no push rights: its task tells it not to push, fetch or run `gh`,
 
 ## The board
 
-The board is the `.factory/` folder on the branch `factory_board`: an orphan branch that shares no history with the code and is never merged. Besides `.factory/` it may hold the owner's Pages workflow (`references/board-pages.yml`) and its copy of `.factory/board.py`; leave both alone. The remote is `origin` unless the task names another.
+The board is the `.factory/` folder on the branch `factory_board`: an orphan branch that shares no history with the code and is never merged. Besides `.factory/` it may hold the owner's Pages workflow (`references/board-pages.yml`) and its copy of `.factory/board.py`; leave both alone. `.factory/board.txt` is the text board, which only the manager writes (Each run, step 6). The remote is `origin` unless the task names another.
 
 ```
 .factory/
   factory.toml   settings, written by the owner
+  board.txt      the board as plain text, with board = "text"
   backlog/       ideas the owner keeps; numbered, never built
   new/           what the owner wants built; build takes one per run
   review/        built and pushed; review takes one per run
@@ -74,6 +75,7 @@ The owner moves items into `backlog/`, `new/` and `stop/`. The manager moves the
 - `ship`: the actions a ship takes, in order, from `merge`, `tag` and `push` (default all three).
 - `prefix`: capital letters put before item numbers (default `FT`).
 - `timezone`: the clock for section times and the board page, such as `Asia/Tokyo` (default: the machine's).
+- `board`: how people see the board besides the item files: `web` (a GitHub Pages site, published by the owner's `references/board-pages.yml`; the manager does nothing), `text` (`.factory/board.txt`, written by the manager) or `off` (default `web`).
 
 ### An item file
 
@@ -132,7 +134,8 @@ Every board change is a commit on `factory_board` in `repo` that touches only `.
 3. **Update.** `git fetch origin --prune`. Check out `factory_board` (the first time, `git checkout -b factory_board origin/factory_board`) and fast-forward it. Read `.factory/factory.toml`.
 4. **Number** the files in `backlog/` and `new/` named `<slug>.md`, and any file there whose number another item already has (the older keeps it). Take the next numbers above the highest in every folder, oldest file first; set `source` where it applies. Rename with `git mv` in one board commit, `factory: number <ID> <slug>, …`, and push it before anything else.
 5. Do the run (below).
-6. **End.** Release the lock. If the run built, reviewed, shipped or moved an item, send the summary ("Summary"): the items touched, each move, every install, and what the owner should look at. Otherwise send the contact nothing, not even a summary; recovery and numbering go only in the run's own output.
+6. **Text board** (with `board = "text"`, when the run pushed a board commit). `git pull --ff-only origin factory_board`, then `python3 <skill>/scripts/board.py . --text -o .factory/board.txt` with this skill's own script, and commit that file alone, `factory: board`, as in Writing to the board. If the push is refused, `git reset --hard HEAD^` and start this step over, at most three times. A failure goes in the summary; it does not fail the run.
+7. **End.** Release the lock. If the run built, reviewed, shipped or moved an item, send the summary ("Summary"): the items touched, each move, every install, and what the owner should look at. Otherwise send the contact nothing, not even a summary; recovery and numbering go only in the run's own output.
 
 ## Build
 

@@ -73,6 +73,15 @@ ship = ["merge", "tag", "push"]
 # messages, so they are not mistaken for issue or PR numbers. Default: FT.
 prefix = "FT"
 
+# How you see the board, besides the item files:
+#   web   a page on GitHub Pages, published on each push by board-pages.yml
+#         (set it up once; the factory itself does nothing)
+#   text  .factory/board.txt, plain text the factory rewrites after each run
+#         that changes the board: read it on GitHub, or with cat after a pull
+#   off   neither
+# Default: web. Switching away from text leaves board.txt as it is.
+board = "web"
+
 # The clock for section times and the board page (scripts/board.py),
 # so CI in UTC shows the same times as the files. Default: the machine's.
 timezone = "Europe/Berlin"

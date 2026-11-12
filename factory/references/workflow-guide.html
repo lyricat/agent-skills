@@ -406,7 +406,7 @@ details .box, details .tablewrap { background: var(--bg); }
         <thead><tr><th>You want to</th><th>Do</th></tr></thead>
         <tbody>
           <tr><td>Edit the board</td><td>in the <code>factory_board</code> worktree; pull before, push after</td></tr>
-          <tr><td>See what waits for you</td><td><code>python3 board.py -o board.html</code> (<code>--text</code> for plain text), or the GitHub Pages site (<code>board-pages.yml</code>): the items marked <i>Decide</i> or <i>Check</i></td></tr>
+          <tr><td>See what waits for you</td><td>the GitHub Pages site (<code>board = "web"</code>, <code>board-pages.yml</code>), <code>.factory/board.txt</code> (<code>board = "text"</code>), or <code>python3 board.py -o board.html</code> (<code>--text</code> for plain text): the items marked <i>Decide</i> or <i>Check</i></td></tr>
           <tr><td>Add a feature or issue</td><td>a file in <code>.factory/new/</code>, push</td></tr>
           <tr><td>Keep an idea for later</td><td>a file in <code>.factory/backlog/</code>, push; <code>git mv</code> it to <code>new/</code> when it should be built</td></tr>
           <tr><td>Fix after a P0/P1 review</td><td>a note at the end of its file, <code>git mv</code> it to <code>new/</code>, push</td></tr>
@@ -547,6 +547,7 @@ notes:
 <span class="y">max_rounds</span> = 3
 <span class="y">ship</span> = ["merge", "tag", "push"]
 
+<span class="y">board</span> = "web"
 <span class="y">prefix</span> = "FT"
 <span class="y">timezone</span> = "Europe/Berlin"</pre>
       </div>
@@ -559,6 +560,7 @@ notes:
         <li><b>never</b><span>Paths the agent must not change, on any branch. A build that touches one is undone.</span></li>
         <li><b>max_rounds</b><span>How many builds an item gets. A P0/P1 review sends it back to <code>new/</code> until then; default 1, so every one waits for you.</span></li>
         <li><b>ship</b><span>What a ship does: merge into <code>base</code>, tag the next <code>vX.Y.Z</code>, push both. Drop <code>tag</code> for no tags, <code>push</code> for a dry run; add <code>clean</code> to delete merged <code>factory/</code> branches.</span></li>
+        <li><b>board</b><span>How you see the board: <code>web</code>, a GitHub Pages site (<code>board-pages.yml</code>); <code>text</code>, <code>.factory/board.txt</code>, which the agent rewrites after each run that changes the board; <code>off</code>, neither.</span></li>
         <li><b>rules</b><span>Extra instructions for the coder in this repository, on top of the general ones: what not to touch on this machine, how to test safely.</span></li>
       </ul>
     </div>
