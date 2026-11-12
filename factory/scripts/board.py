@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Render a repository's .factory/ board as one static HTML page.
+"""Render a repository's .factory/ board as one static HTML page, or as plain text.
 
     board.py [REPO] [-o board.html]
+    board.py [REPO] --text [-o board.txt]
 
 REPO is a checkout of the factory_board branch, where the board lives; it
 defaults to the current directory. references/board-pages.yml runs it on
@@ -14,6 +15,10 @@ done.html beside the page, so the board stays small however long the factory
 runs; their threads are the item files on GitHub. It needs only Python 3.11 and
 git, and loads nothing from the network. Item files are other people's text:
 everything is escaped.
+
+With --text it writes the same stages, counts and asks in ASCII, for a terminal
+or a file where the page cannot be opened. Titles stay as written, without
+control characters; the threads are the item files themselves.
 """
 
 import argparse
@@ -24,6 +29,7 @@ import re
 import subprocess
 import sys
 import tomllib
+import unicodedata
 from zoneinfo import ZoneInfo
 
 FOLDERS = ["backlog", "new", "review", "ready", "done"]  # stop/ is parked: not shown
@@ -819,14 +825,119 @@ def render_archive(cfg, name, items, board):
     return "".join(out)
 
 
+def plain(text):
+    """Untrusted text for a terminal: control characters (escape sequences, carriage
+    returns) become spaces, so an item file cannot repaint the screen."""
+    return "".join(" " if unicodedata.category(c) == "Cc" else c for c in text).strip()
+
+
+# The common terminal width; the text board's lines fit in it.
+TEXT_WIDTH = 80
+
+
+def cols(text):
+    """How many terminal columns text takes: wide (CJK) characters take two."""
+    return sum(2 if unicodedata.east_asian_width(c) in "WF" else 1 for c in text)
+
+
+def wrap(first, rest, text):
+    """text after the prefix first, its further lines after rest, each line within
+    TEXT_WIDTH. Breaks between words, and anywhere between wide characters, which
+    CJK text has no spaces between; a word longer than a line is cut. A no-break
+    space holds two words together and prints as a plain space."""
+    width = TEXT_WIDTH - cols(rest)
+    tokens, word = [], ""
+    for c in text:
+        if (c.isspace() and c != "\u00a0") or cols(c) == 2:
+            if word:
+                tokens.append(word)
+                word = ""
+            tokens.append(c if cols(c) == 2 else " ")
+        else:
+            word += c
+    if word:
+        tokens.append(word)
+    lines, cur = [], ""
+    for t in tokens:
+        if t == " ":
+            cur += " " if cur and not cur.endswith(" ") else ""
+            continue
+        if cur and cols(cur) + cols(t) > width:
+            lines.append(cur.rstrip())
+            cur = ""
+        while cols(t) > width:
+            cut = 0
+            while cols(t[:cut + 1]) <= width:
+                cut += 1
+            lines.append(t[:cut])
+            t = t[cut:]
+        cur += t
+    lines.append(cur.rstrip())
+    return [(first if i == 0 else rest) + line.replace("\u00a0", " ") for i, line in enumerate(lines)]
+
+
+def render_text(cfg, name, items):
+    """The board as plain text, for a terminal or a file: the same stages, counts and asks
+    as the page, drawn in ASCII. Titles stay as written. Threads are the item files."""
+    today = dt.datetime.now(TZ)
+    now = today.timestamp()
+    by = {f: [] for f in FOLDERS}
+    for it in items:
+        by[it["folder"]].append(it)
+    for f in FOLDERS:
+        by[f].sort(key=lambda it: -it["changed"] if f == "done" else it["since"])
+    yours = sum(1 for it in items if it["turn"] == "you")
+    agents = sum(1 for it in items if it["turn"] == "agent")
+    sent_back = sum(max(0, rounds(it) - 1) for it in items)
+    head = f"{plain(name)} - factory board"
+    out = [head, "=" * len(head)]
+    gates = f"{yours} at your gates" if yours else "Nothing at your gates"
+    out.append(f"{gates} | {agents} with the agent | {len(by['done'])} done" + (f" | {sent_back} sent back" if sent_back else ""))
+    out.append(f"Drawn {today:%b} {today.day}, {today:%H:%M}" + (f" | {cfg['github_url']}" if cfg.get("github_url") else ""))
+    width = max([len(it["label"]) for it in items] + [4])
+    # One stage under the next, in the page's order. Nothing runs side by side, and item
+    # text wraps under its title within TEXT_WIDTH, so it reads the same in cat, less or vim.
+    for key, title, _ in STATIONS:
+        group = by[key]
+        gate = " [!]" if any(it["turn"] == "you" for it in group) else ""
+        avg = average_stay(items, key) if key in ("new", "review", "ready") else ""
+        note = "never built" if key == "backlog" else f"avg stay {avg}" if avg else ""
+        head = f"{title.upper()} ({len(group)}){gate}"
+        out += ["", f"{head:<44}{note}".rstrip()]
+        shown = group[:DONE_SHOWN] if key == "done" else group
+        if not shown:
+            out.append("    Nothing here")
+        for it in shown:
+            mark = "*" if it["turn"] == "you" else " "
+            text = plain(it["title"]) + (f"  (round\u00a0{it['round']})" if rounds(it) > 1 else "")
+            pad = " " * (width + 12)
+            out += wrap(f"  {mark} {it['label']:<{width}}  {age(it['since'], now):>4}  ", pad, text)
+            if it["turn"] == "you":
+                out += wrap(f"{pad}> ", f"{pad}  ", ASK[it["folder"]])
+            if it["problems"]:
+                out += wrap(f"{pad}! ", f"{pad}  ", "Check the file: " + "; ".join(sorted(set(it["problems"]))))
+        if len(group) > len(shown):
+            out.append(f"    ... {len(group) - len(shown)} more in .factory/{key}/")
+    out += ["", "* waits for you. [!] a stage that holds one.", "Each item's thread is its file in .factory/<folder>/.", ""]
+    return "\n".join(out)
+
+
 def main():
-    ap = argparse.ArgumentParser(description="Render a .factory/ board as one HTML page.")
+    ap = argparse.ArgumentParser(description="Render a .factory/ board as one HTML page, or as plain text.")
     ap.add_argument("repo", nargs="?", default=".", help="a checkout of factory_board (default: the current directory)")
     ap.add_argument("-o", "--out", help="write here instead of to standard output")
+    ap.add_argument("--text", action="store_true", help="plain ASCII text instead of HTML")
     a = ap.parse_args()
     if not os.path.isfile(os.path.join(a.repo, ".factory", "factory.toml")):
         sys.exit(f"board.py: {a.repo} has no .factory/factory.toml; give a checkout of factory_board")
     cfg, name, items = load(a.repo)
+    if a.text:
+        if a.out:
+            with open(a.out, "w", encoding="utf-8") as f:
+                f.write(render_text(cfg, name, items))
+        else:
+            sys.stdout.write(render_text(cfg, name, items))
+        return
     if not a.out:  # one stream holds one page, so the board keeps every item
         sys.stdout.write(render(cfg, name, items))
         return
