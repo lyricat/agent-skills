@@ -40,7 +40,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Reads board from factory.toml. Without "web", publish never starts, so no
+  # Pages deployment is made.
+  mode:
+    runs-on: ubuntu-latest
+    outputs:
+      board: ${{ steps.mode.outputs.board }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .factory/factory.toml
+          sparse-checkout-cone-mode: false
+      - id: mode
+        run: python3 -c 'import tomllib; print("board=" + tomllib.load(open(".factory/factory.toml", "rb")).get("board", "web"))' >> "$GITHUB_OUTPUT"
+
   publish:
+    needs: mode
+    if: needs.mode.outputs.board == 'web'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -49,14 +65,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # board.py reads the history for when items moved
-      - id: mode
-        run: python3 -c 'import tomllib; print("board=" + tomllib.load(open(".factory/factory.toml", "rb")).get("board", "web"))' >> "$GITHUB_OUTPUT"
-      - if: steps.mode.outputs.board == 'web'
-        run: mkdir site && python3 .factory/board.py . -o site/index.html
-      - if: steps.mode.outputs.board == 'web'
-        uses: actions/upload-pages-artifact@v3
+      - run: mkdir site && python3 .factory/board.py . -o site/index.html
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: site
       - id: deploy
-        if: steps.mode.outputs.board == 'web'
         uses: actions/deploy-pages@v4
