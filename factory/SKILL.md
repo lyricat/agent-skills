@@ -28,7 +28,7 @@ The task gives these; otherwise use the defaults:
 - `items` (ship only): `auto` in a scheduled job (`references/ship-cron.md`); otherwise the owner's own words say which items.
 
 Every message, to the contact or as a GitHub comment, uses its template in `references/messages.md`, named below in quotes ("Build started"). If one cannot be sent, put it in the summary and go on. Send only those messages, at the step that names them. Never tell the contact that there is nothing to do, that a run started or found no item, or that the board is unchanged.
-- `dir`: the run's own directory, `~/.factory/<OWNER>/<REPO>/<run>`, created when missing. It holds the run's clone (`clone/`), its lock (`lock/`) and its worktrees. Each run has its own, so a build and a review can run at once without touching each other's files.
+- `dir`: the run's own directory, `~/.factory/<OWNER>/<REPO>/<run>`, created when missing. It holds the run's clone (`clone/`), its lock (`lock/`), its worktrees and their temporary files (`tmp/`; see Temporary files). Each run has its own, so a build and a review can run at once without touching each other's files.
 - `repo`: the run's clone, `$dir/clone`, made with `gh repo clone "$REPO" "$dir/clone"` the first time. Never use anyone's working copy. Its own checkout holds `factory_board`; code work happens in worktrees.
 
 Stop and say so when `origin/factory_board` does not exist or has no `.factory/factory.toml`; `references/factory.toml` shows the owner how to set it up.
@@ -122,6 +122,12 @@ Every board change is a commit on `factory_board` in `repo` that touches only `.
 4. `git diff --name-only origin/factory_board..HEAD`: every path must be under `.factory/`. If not, reset to `origin/factory_board` and end the run.
 5. `git push origin factory_board`. If refused, go back to 1, at most three times; then end the run and say so. Never force-push.
 
+## Temporary files
+
+Everything the coder and the tests write outside the worktree stays in `dir`, so a run can clear it and nothing piles up in `/tmp`. Each worktree `$dir/<name>` has its own `$dir/tmp/<name>`: `mkdir -p` it, and run the coder, `test` and `after_change` in that worktree with `TMPDIR` set to it. The coder's rules (Build, step 4) put throwaway HOMEs, their caches and other temporary files under `$TMPDIR`, never straight in `/tmp`. Each run removes its own at the end (Each run, step 7); one that stopped leaves them to the next run's recovery.
+
+Never delete anything in `/tmp` itself: other people and programs share it, and a folder there cannot be told apart from theirs.
+
 ## Each run
 
 1. **Lock.** `mkdir -p "$dir" && mkdir "$dir/lock"`. If it exists and was touched in the last 10 minutes, the same run is already going: stop, and send the contact nothing. If older, take it over. `touch` it at each step and just before and after each coder call; remove it when the run ends, also on failure.
@@ -130,12 +136,13 @@ Every board change is a commit on `factory_board` in `repo` that touches only `.
    - `repo` not on `factory_board`: `git checkout factory_board`. Uncommitted changes: `git stash push --include-untracked -m "factory: left by a stopped run <time>"`.
    - Local commits on `factory_board` not on `origin/factory_board`: `git update-ref refs/factory/stopped/<YYYYMMDD-HHMM> factory_board`, then `git reset --hard origin/factory_board` after the fetch below.
    - Worktrees: build keeps its item worktrees (a stopped build goes on there; see Build, step 2). Review and ship remove theirs (`git worktree remove --force`, then `git worktree prune`), first keeping ship's unpushed merge commits as a `refs/factory/stopped/…` ref.
+   - Temporary files: remove each folder in `$dir/tmp/` in which nothing changed in the last 10 minutes (`find <folder> -mmin -10 -print -quit` prints nothing). A newer one belongs to a build still going (see Build), and stays.
    - Ship: local tags that origin does not have (`git ls-remote --tags origin`) were made by a stopped ship: `git tag -d` them.
 3. **Update.** `git fetch origin --prune`. Check out `factory_board` (the first time, `git checkout -b factory_board origin/factory_board`) and fast-forward it. Read `.factory/factory.toml`.
 4. **Number** the files in `backlog/` and `new/` named `<slug>.md`, and any file there whose number another item already has (the older keeps it). Take the next numbers above the highest in every folder, oldest file first; set `source` where it applies. Rename with `git mv` in one board commit, `factory: number <ID> <slug>, …`, and push it before anything else.
 5. Do the run (below).
 6. **Text board** (with `board = "text"`, when the run pushed a board commit). `git pull --ff-only origin factory_board`, then `python3 <skill>/scripts/board.py . --text -o .factory/board.txt` with this skill's own script, and commit that file alone, `factory: board`, as in Writing to the board. If the push is refused, `git reset --hard HEAD^` and start this step over, at most three times. A failure goes in the summary; it does not fail the run.
-7. **End.** Release the lock. If the run built, reviewed, shipped or moved an item, send the summary ("Summary"): the items touched, each move, every install, and what the owner should look at. Otherwise send the contact nothing, not even a summary; recovery and numbering go only in the run's own output.
+7. **End.** Remove `$dir/tmp/<name>` of each worktree the run used, also when it fails, then release the lock. If the run built, reviewed, shipped or moved an item, send the summary ("Summary"): the items touched, each move, every install, and what the owner should look at. Otherwise send the contact nothing, not even a summary; recovery and numbering go only in the run's own output.
 
 ## Build
 
@@ -158,7 +165,7 @@ An item that does not parse, or that cannot be built at all (it contradicts itse
    - When a dependency or tool is missing, install it: project dependencies (`go mod download`, `npm install`, …) and user-level tools (`go install`, `pip install --user`, …). No `sudo`, no system package manager, nothing outside the user's home. List in the report only what the repository did not already pin: a tool it does not specify, or a dependency that changes a manifest or lockfile. Restoring what is pinned is routine and not listed: locked packages and their install scripts, modules from `go.sum`, the package manager version the repository specifies.
    - Run `test` (and `after_change` when needed). When it fails, find the cause, fix it, and run it again.
    - Commit in one or a few commits, each on one topic, titled in the history's style.
-   - Do not push, fetch, run `gh`, touch other branches, change paths in `never`, deploy, or change the user's settings or windows. Scripted tests get a throwaway `HOME`.
+   - Do not push, fetch, run `gh`, touch other branches, change paths in `never`, deploy, or change the user's settings or windows. Scripted tests get a throwaway `HOME`. It, its caches and every other temporary file go under `$TMPDIR` (`mktemp -d`), never straight in `/tmp`.
    - End with what changed, the decisions taken, the installs, the test result, and what could not be checked.
 5. **Tell** the contact about each install the report lists, as soon as the coder returns ("Installed"; "Install needs sudo" for one it could not make). Do not wait for an answer.
 6. **Verify.** `git log <start point>..HEAD` holds only work for this item and merges of `base`; no path in `never` changed against the start point; `test` passes. With no commits, run the coder once more with what is missing; still none: the item cannot be built (above). If `test` fails, give the coder the failure once more. If it still fails, tell the contact ("Tests still failing") and go on: the item moves on with the failure recorded, and the review sees it.
@@ -239,4 +246,5 @@ When a step fails and the case is not here, go on as far as you can without it, 
 | The coder changed things outside the plan | Revert those commits in the worktree, then go on. |
 | `test` fails the same way on `base` | Say so in the item's section and the message; do not fix it on this branch. |
 | An install needs `sudo` | Do not install it; tell the contact what is missing and go on without it. |
-| The disk is full in `dir` | Remove worktrees of items in `done/` or `stop/`, not their branches. |
+| The disk is full in `dir` | Remove worktrees of items in `done/` or `stop/`, not their branches, and their `$dir/tmp/` folders. |
+| `/tmp` is full of folders like `ft96-home-…` or `ft96-gocache` | Left by runs from before Temporary files. Do not delete them: tell the contact, who clears them while no run holds a lock. |
