@@ -412,6 +412,7 @@ details .box, details .tablewrap { background: var(--bg); }
           <tr><td>Fix after a P0/P1 review</td><td>a note at the end of its file, <code>git mv</code> it to <code>new/</code>, push</td></tr>
           <tr><td>Accept builds</td><td>tell the manager which <code>ready/</code> items are fine (or all); it merges, tags and pushes them</td></tr>
           <tr><td>Ship without asking</td><td>schedule the ship job (<code>ship-cron.md</code>); hold an item back with a note or <code>stop/</code></td></tr>
+          <tr><td>Free disk space</td><td>tell the manager <i>factory clean</i>: it lists the folders the factory left on this machine, and deletes those you confirm</td></tr>
           <tr><td>Reject a ready build</td><td>tell the manager to send it to <code>new/</code> (with what to change) or <code>backlog/</code></td></tr>
           <tr><td>Pause or resume</td><td><code>git mv</code> to <code>stop/</code>, or back to <code>new/</code>, push</td></tr>
         </tbody>

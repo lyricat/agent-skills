@@ -1,6 +1,6 @@
 ---
 name: factory
-description: "Manage a software factory whose features and issues are plain Markdown files in the .factory/ folder of a repository's factory_board branch, the folder a file sits in being its progress. Three runs: build (a coding agent builds one item from new/ and it moves to review/), review (the coding agent reviews one item in review/; without P0 or P1 findings it moves to ready/, with them it goes back to new/ while fix rounds remain), and ship (on the owner's word or on a schedule, merge ready/ items into the base branch, tag it and push, moving them to done/, or send them back). Use when a scheduled task or the owner asks for a factory build, review or ship run on a repository whose factory_board branch has .factory/factory.toml. Do not use for repositories without that branch, or for one-off coding tasks."
+description: "Manage a software factory whose features and issues are plain Markdown files in the .factory/ folder of a repository's factory_board branch, the folder a file sits in being its progress. Four runs: build (a coding agent builds one item from new/ and it moves to review/), review (the coding agent reviews one item in review/; without P0 or P1 findings it moves to ready/, with them it goes back to new/ while fix rounds remain), ship (on the owner's word or on a schedule, merge ready/ items into the base branch, tag it and push, moving them to done/, or send them back), clean (on the owner's word, 'factory clean': list the factory's leftover folders on this machine and delete those the owner confirms). Use when a scheduled task or the owner asks for a factory build, review, ship or clean run on a repository whose factory_board branch has .factory/factory.toml. Do not use for repositories without that branch, or for one-off coding tasks."
 ---
 
 # Factory
@@ -14,15 +14,16 @@ The board is plain files on their own branch, `factory_board`; code, branches an
 - **build** (scheduled): one item from `new/` is built, or fixed, on its own branch and moves to `review/`.
 - **review** (scheduled): one item in `review/` is reviewed. Without P0 or P1 findings it moves to `ready/`; with them it goes back to `new/` for a fix round while its `round` is below `max_rounds`, else it stays and the owner decides.
 - **ship** (when the owner asks, or scheduled): the owner says which `ready/` items are fine and what to do with the rest, or a scheduled ship takes every `ready/` item whose review still holds. They go through the `ship` actions (merge into `base`, tag, push) and move to `done/`.
+- **clean** (only when the owner asks, "factory clean"): lists the folders the factory left on this machine that can go, and deletes those the owner confirms (Clean).
 
-Each run handles one item (ship: the items it takes) and stops. The coder works on its own: it decides what the request leaves open, resolves conflicts, installs what is missing and fixes failing tests, and nobody waits for an answer. Unclear ideas belong in `backlog/`, where the factory does not build them.
+Each build, review or ship handles one item (ship: the items it takes) and stops. The coder works on its own: it decides what the request leaves open, resolves conflicts, installs what is missing and fixes failing tests, and nobody waits for an answer. Unclear ideas belong in `backlog/`, where the factory does not build them.
 
 ## Inputs
 
 The task gives these; otherwise use the defaults:
 
-- `run`: `build`, `review` or `ship`.
-- `REPO`: `OWNER/REPO` on GitHub.
+- `run`: `build`, `review`, `ship` or `clean`.
+- `REPO`: `OWNER/REPO` on GitHub. Clean only: optional; without it, every repository under `~/.factory/`.
 - `contact`: who to tell, and how (a chat or mail tool). Without one, put every message in the run's summary.
 - `coder`: which coding agent to call, such as Codex or Claude Code. Default: the runner's `coder` tool with its own default agent, else this agent's own CLI.
 - `items` (ship only): `auto` in a scheduled job (`references/ship-cron.md`); otherwise the owner's own words say which items.
@@ -126,7 +127,7 @@ Every board change is a commit on `factory_board` in `repo` that touches only `.
 
 Everything the coder and the tests write outside the worktree stays in `dir`, so a run can clear it and nothing piles up in `/tmp`. Each worktree `$dir/<name>` has its own `$dir/tmp/<name>`: `mkdir -p` it, and run the coder, `test` and `after_change` in that worktree with `TMPDIR` set to it. The coder's rules (Build, step 4) put throwaway HOMEs, their caches and other temporary files under `$TMPDIR`, never straight in `/tmp`. Each run removes its own at the end (Each run, step 7); one that stopped leaves them to the next run's recovery.
 
-Never delete anything in `/tmp` itself: other people and programs share it, and a folder there cannot be told apart from theirs.
+Build, review and ship never delete anything in `/tmp` itself: other people and programs share it, and a folder there cannot be told apart from theirs. Only a clean run does, and only what the owner confirmed.
 
 ## Each run
 
@@ -219,6 +220,21 @@ A ship takes items from `ready/` through the actions in `ship`, in this order: `
 7. **Board.** In one board commit, move each merged item to `done/` with a section: the merge commit, the tag, and what was closed, already closed or refused, and whether its branch was deleted; and, in a scheduled ship, each item that did not merge back to `review/` with its section. Push it. Remove the merged items' worktrees in the build and review directories when they are there.
 8. **Tell** the contact, per item: "Merged", "Sent back" or "Back to review"; those left in `ready/` were told above.
 
+## Clean
+
+Only on the owner's word ("factory clean"), never in a scheduled job. It deletes nothing until the owner confirms. It works on this machine alone: no GitHub, no board commits, no lock of its own, and no contact messages; it answers in the conversation. It skips the steps in Each run.
+
+A build, review or ship run is **going** when its `lock/` was touched in the last 10 minutes. Leave out everything in a going run's `dir`.
+
+1. **List** what can go, with each folder's full path and size (`du -sh`):
+   - Temporary folders `~/.factory/<OWNER>/<REPO>/<run>/tmp/<name>` in which nothing changed in the last 10 minutes (`find <folder> -mmin -10 -print -quit` prints nothing).
+   - Build worktrees `…/build/<ID>-<slug>` of items in `done/`, by any of the repository's clones (`git -C <clone> ls-tree --name-only origin/factory_board .factory/done/`); `done/` is final, so an older clone is enough. Review and ship worktrees: `…/review/review-<ID>` and `…/ship/base`.
+   - Folders directly in `/tmp` named after an item, `<prefix><N>-…` in any case (`ft96-home-…`, `FT96-gocache`), with the `prefix` of a repository under `~/.factory/` (default `FT`), owned by the current user, in which nothing changed in the last hour. Leave all of `/tmp` out while any run on this machine is going, and say so: its folders cannot be told apart by run.
+
+   Number the list, give the total, and ask which to delete: all, some by number, or none. With nothing to list, say so and stop.
+2. **Delete** only what the owner confirmed. Check each again just before: its run is still not going and it is still unchanged; skip one that is not, and name it. A worktree: `git -C <clone> worktree remove --force <path>`, then `git -C <clone> worktree prune`. Anything else: `rm -rf <path>`. Delete nothing else: no clones, branches, refs, locks or item files.
+3. **Report** what was deleted, what was skipped and why, and the space freed.
+
 ## Never
 
 - Push to `base` outside a ship run, merge into `base` anything but the items the owner called fine or a scheduled ship found fine, force-push, or rewrite history others have.
@@ -247,4 +263,4 @@ When a step fails and the case is not here, go on as far as you can without it, 
 | `test` fails the same way on `base` | Say so in the item's section and the message; do not fix it on this branch. |
 | An install needs `sudo` | Do not install it; tell the contact what is missing and go on without it. |
 | The disk is full in `dir` | Remove worktrees of items in `done/` or `stop/`, not their branches, and their `$dir/tmp/` folders. |
-| `/tmp` is full of folders like `ft96-home-…` or `ft96-gocache` | Left by runs from before Temporary files. Do not delete them: tell the contact, who clears them while no run holds a lock. |
+| `/tmp` is full of folders like `ft96-home-…` or `ft96-gocache` | Left by runs from before Temporary files. Do not delete them: tell the contact that the owner can say "factory clean". |
