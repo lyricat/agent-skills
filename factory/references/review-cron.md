@@ -4,7 +4,7 @@ A scheduled job in which the manager runs one factory **review**: it takes one i
 
 Before using it:
 
-- `gh` must act on the repository with the rights in `github-app.md`, including Issues and Pull requests: write for the comments. The job keeps its own clone in `~/.factory/OWNER/REPO/review/clone`.
+- `gh` must act on the repository with the rights in `github-app.md`, including Issues and Pull requests: write for the comments. The job keeps its own clone in `~/.factory/OWNER/REPO/review/clone`, or under `root` when the prompt sets one (`root: /opt/factory` shares the run folders between users; see Shared root in the skill).
 - The coder should have the review-code skill; it reviews without it, less thoroughly.
 - Schedule it every 30 minutes or so, beside the build job (`build-cron.md`) and the ship job (`ship-cron.md`). A run reviews one item.
 

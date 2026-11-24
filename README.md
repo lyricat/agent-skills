@@ -33,6 +33,7 @@
 - build 构建 `new/` 中的一个条目并移入 `review/`；review 审查 `review/` 中的一个条目，没有 P0 或 P1 问题时移入 `ready/`，有问题且轮次低于 `max_rounds` 时退回 `new/`，由下一次 build 继续修复，达到上限后留在 `review/` 等所有者决定。
 - ship 在所有者确认后，或由定时任务（`items: auto`）自动处理 `ready/` 中审查仍然有效的条目：依次执行 `ship` 中的动作，默认是合并进目标分支、打新标签、推送目标分支，然后移入 `done/`。自动 ship 中合并冲突或测试失败的条目退回 `review/`。定时任务示例见 [`ship-cron.md`](factory/references/ship-cron.md)。
 - 对代理说 “factory clean”，它会列出 factory 在本机留下、可以删除的内容（临时目录和零散文件、已完成条目的 worktree 和已合并的本地分支、`/tmp` 中的残留、旧布局留下的目录）及其大小，经你确认后才删除。无法确认属于 factory 的 `/tmp` 文件和共享缓存不会列出。
+- 运行目录默认在 `~/.factory`。在任务中设置 `root`（如 `/opt/factory`）可让本机所有用户共用同一套运行目录，一个用户的锁也会挡住其他用户对同一仓库的同类运行；需要一个共享的用户组，设置方法见 skill 中的 Shared root。
 - 目标分支由 `.factory/factory.toml` 中的 `base` 决定，默认是 `master`。构建从这个分支开始，ship 也合并进这个分支。
 
 要让完成的条目合并进 `develop` 而不是 `master`，在该仓库看板的 `factory.toml` 中设置：

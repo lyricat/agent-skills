@@ -6,7 +6,7 @@ The actions come from `ship` in `.factory/factory.toml`, by default `["merge", "
 
 Before using it:
 
-- `gh` must act on the repository with the rights in `github-app.md`: Contents write to push `base` and tags, and Issues and Pull requests write to close what the items link. Rules on `base` or on tags must let the App through. The job keeps its own clone in `~/.factory/OWNER/REPO/ship/clone`.
+- `gh` must act on the repository with the rights in `github-app.md`: Contents write to push `base` and tags, and Issues and Pull requests write to close what the items link. Rules on `base` or on tags must let the App through. The job keeps its own clone in `~/.factory/OWNER/REPO/ship/clone`, or under `root` when the prompt sets one (`root: /opt/factory` shares the run folders between users; see Shared root in the skill).
 - Each run that merges something makes one tag, so the schedule sets how often you release: once or a few times a day suits most repositories.
 - With this job, `ready/` no longer waits for you. To hold an item back, add a note to it (an owner section after its review) or move it to `stop/`.
 
