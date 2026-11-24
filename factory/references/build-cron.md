@@ -4,7 +4,7 @@ A scheduled job in which the manager runs one factory **build**: it takes one it
 
 Before using it:
 
-- `gh` must act on the repository with the rights in `github-app.md`. Nothing to clone by hand: the job keeps its own clone in `~/.factory/OWNER/REPO/build/clone`, or under `root` when the prompt sets one (`root: /opt/factory` shares the run folders between users; see Shared root in the skill), and each item gets its own worktree beside it.
+- `gh` must act on the repository with the rights in `github-app.md`. Nothing to clone by hand: the job keeps its own clone in `~/.factory/OWNER/REPO/build/clone`, or under `ROOT` when the prompt sets one (`ROOT: /opt/factory` shares the run folders between users; see Shared root in the skill), and each item gets its own worktree beside it.
 - Give the job a way to reach you (a chat or mail tool), or read its summary.
 - Schedule it every 30 minutes or so. A run builds one item; the lock keeps two builds from overlapping. The review job (`review-cron.md`) runs beside it in its own directory.
 
@@ -14,10 +14,10 @@ The prompt holds only the run's inputs. Everything the run does is in the skill,
 
 ```
 Run one factory build with $factory.
-run: build
+RUN: build
 REPO: OWNER/REPO
-contact: <who to tell, and how: tg:@name, slack:#channel, or anything else>
-coder: $coder with Codex
+CONTACT: <who to tell, and how: tg:@name, slack:#channel, or anything else>
+CODER: $coder with Codex
 ```
 
-One job per repository; only `REPO` (and perhaps `contact`) differs between them. Settings for one repository (its test command, rules, paths it must not change) belong in that repository's `.factory/factory.toml`, not in the prompt.
+One job per repository; only `REPO` (and perhaps `CONTACT`) differs between them. Settings for one repository (its test command, rules, paths it must not change) belong in that repository's `.factory/factory.toml`, not in the prompt.

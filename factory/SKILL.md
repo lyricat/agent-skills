@@ -20,17 +20,17 @@ Each build, review or ship handles one item (ship: the items it takes) and stops
 
 ## Inputs
 
-The task gives these; otherwise use the defaults:
+The task gives these inputs; otherwise use the defaults. Inputs are written in capitals; settings from `factory.toml` and the names the skill derives from them (`dir`, `repo`) are lower case.
 
-- `run`: `build`, `review`, `ship` or `clean`.
-- `REPO`: `OWNER/REPO` on GitHub. Clean only: optional; without it, every repository under `root`.
-- `root`: where the run folders live. Default: `~/.factory`. A shared folder such as `/opt/factory` lets every user on the machine use the same run folders (Shared root). Give all runs of a repository on a machine the same `root`, or their locks do not see each other.
-- `contact`: who to tell, and how (a chat or mail tool). Without one, put every message in the run's summary.
-- `coder`: which coding agent to call, such as Codex or Claude Code. Default: the runner's `coder` tool with its own default agent, else this agent's own CLI.
-- `items` (ship only): `auto` in a scheduled job (`references/ship-cron.md`); otherwise the owner's own words say which items.
+- `RUN`: `build`, `review`, `ship` or `clean`.
+- `REPO`: `OWNER/REPO` on GitHub. Clean only: optional; without it, every repository under `ROOT`.
+- `ROOT`: where the run folders live. Default: `~/.factory`. A shared folder such as `/opt/factory` lets every user on the machine use the same run folders (Shared root). Give all runs of a repository on a machine the same `ROOT`, or their locks do not see each other.
+- `CONTACT`: who to tell, and how (a chat or mail tool). Without one, put every message in the run's summary.
+- `CODER`: which coding agent to call, such as Codex or Claude Code. Default: the runner's `coder` tool with its own default agent, else this agent's own CLI.
+- `ITEMS` (ship only): `auto` in a scheduled job (`references/ship-cron.md`); otherwise the owner's own words say which items.
 
 Every message, to the contact or as a GitHub comment, uses its template in `references/messages.md`, named below in quotes ("Build started"). If one cannot be sent, put it in the summary and go on. Send only those messages, at the step that names them. Never tell the contact that there is nothing to do, that a run started or found no item, or that the board is unchanged.
-- `dir`: the run's own directory, `<root>/<OWNER>/<REPO>/<run>`, created when missing. It holds the run's clone (`clone/`), its lock (`lock/`), its worktrees, their temporary files (`tmp/`) and the list of `/tmp` paths its runs left (`outside`); see Temporary files. Each run has its own, so a build and a review can run at once without touching each other's files.
+- `dir`: the run's own directory, `<ROOT>/<OWNER>/<REPO>/<RUN>`, created when missing. It holds the run's clone (`clone/`), its lock (`lock/`), its worktrees, their temporary files (`tmp/`) and the list of `/tmp` paths its runs left (`outside`); see Temporary files. Each run has its own, so a build and a review can run at once without touching each other's files.
 - `repo`: the run's clone, `$dir/clone`, made with `gh repo clone "$REPO" "$dir/clone"` the first time. Never use anyone's working copy. Its own checkout holds `factory_board`; code work happens in worktrees.
 
 Stop and say so when `origin/factory_board` does not exist or has no `.factory/factory.toml`; `references/factory.toml` shows the owner how to set it up.
@@ -159,7 +159,7 @@ Build, review and ship never delete anything in `/tmp` itself: other people and 
 
 ## Shared root
 
-With a shared `root`, every user's runs use the same `dir`, so one user's lock also holds off another user's run of the same repository. Installs and shared caches stay in each user's own home, and only a `/tmp` path's owner can delete it.
+With a shared `ROOT`, every user's runs use the same `dir`, so one user's lock also holds off another user's run of the same repository. Installs and shared caches stay in each user's own home, and only a `/tmp` path's owner can delete it.
 
 An admin sets it up once, and each user once:
 
@@ -169,11 +169,11 @@ mkdir -p /opt/factory && chgrp factory /opt/factory && chmod 2775 /opt/factory
 git config --global --add safe.directory '/opt/factory/*'    # each user
 ```
 
-The setgid bit (`2775`) gives everything made under `root` its group. Without the `safe.directory` entry, git refuses clones and worktrees another user made; an entry ending in `/*` covers every repository under it (`git help config`). That entry also lets each group member run code as every other one, through a clone's hooks and config: give the group only to users who trust each other.
+The setgid bit (`2775`) gives everything made under `ROOT` its group. Without the `safe.directory` entry, git refuses clones and worktrees another user made; an entry ending in `/*` covers every repository under it (`git help config`). That entry also lets each group member run code as every other one, through a clone's hooks and config: give the group only to users who trust each other.
 
 In a shared root, a run also:
 
-- Stops and says what is missing when `mkdir` in `root` is refused: the group, or the mode.
+- Stops and says what is missing when `mkdir` in `ROOT` is refused: the group, or the mode.
 - Runs everything, the coder included, with `umask 002`, so what it makes stays writable by the group.
 - Makes a missing clone with `gh repo clone "$REPO" "$dir/clone" -- -c core.sharedRepository=group`.
 - After each coder call, `test` and `after_change`, runs `chmod -R g+rwX "$dir/<name>" "$dir/tmp/<name>"`. `mktemp -d` makes folders only their maker can open, and some tools make read-only ones, but another user's recovery must be able to remove them.
@@ -255,7 +255,7 @@ Take one item from `review/`: the oldest by last change whose branch head (`git 
 A ship takes items from `ready/` through the actions in `ship`, in this order: `merge` (into `base`, tested), `tag` (the merged `base`), `push` (`base` and the tag; then the items move to `done/`) and `clean` (delete merged `factory/` branches; needs `push`). Default: `merge`, `tag` and `push`. Which items it takes:
 
 - **Asked.** The owner says, in their own words, what to do with the items in `ready/`: all fine, or which are fine and which go back to `new/` or `backlog/`, and why. Ask only when it is not clear which items they mean. Items they do not mention stay in `ready/`.
-- **Scheduled** (`items: auto`). Every item in `ready/` that is still fine: its latest `factory · review` section has `verdict: pass` and the `head:` of `git rev-parse origin/<branch>`, and no owner section follows it (an owner's note waits for the owner). The others stay in `ready/` and are named in the summary. No such item, or no `merge` in `ship`: release the lock and stop. Send the contact nothing.
+- **Scheduled** (`ITEMS: auto`). Every item in `ready/` that is still fine: its latest `factory · review` section has `verdict: pass` and the `head:` of `git rev-parse origin/<branch>`, and no owner section follows it (an owner's note waits for the owner). The others stay in `ready/` and are named in the summary. No such item, or no `merge` in `ship`: release the lock and stop. Send the contact nothing.
 
 1. **Send back** (asked) each item the owner names, to `new/` or `backlog/`, with a section signed with the owner's name holding their words as they gave them; the next build of a `new/` item fixes it on the same branch. One board commit, pushed. Without `merge` in `ship`, the run ends here.
 2. **Merge** the items into `base`, in a worktree: `git worktree add -B <base> "$dir/base" origin/<base>`. For each item, oldest ID first, note `HEAD`, then `git merge --no-ff --no-edit -m "Merge <ID>: <title>" origin/<branch>`, `after_change` when needed, and the item's tests: those the merge adds or changes, and those of the packages or modules whose files it changes (`git diff --name-only <noted HEAD> HEAD`), run with the repository's own test runner. When it is unclear which tests those are, or they cannot be run alone, run `test` instead.
@@ -281,17 +281,17 @@ A build, review or ship run is **going** when its `lock/` was touched in the las
 Unchanged means nothing in it changed in the last 10 minutes (`find <path> -mmin -10 -print -quit` prints nothing); in `/tmp`, the last hour (`-mmin -60`). An entry with a `.git` file or folder is a worktree.
 
 1. **List** what can go, with each one's full path and size (`du -sh`; none for a branch). `done/` is final, so any of the repository's clones can say what is in it (`git -C <clone> ls-tree --name-only origin/factory_board .factory/done/`), even an older one.
-   - Temporary folders `<root>/<OWNER>/<REPO>/<run>/tmp/<name>`, unchanged.
+   - Temporary folders `<ROOT>/<OWNER>/<REPO>/<RUN>/tmp/<name>`, unchanged.
    - Strays: anything else directly in a `dir` or its `tmp/` that the layout in Temporary files does not name, unchanged, and not a worktree.
    - Build worktrees `…/build/<ID>-<slug>` of items in `done/`. Review and ship worktrees: `…/review/review-<ID>` and `…/ship/base`.
    - Merged branches: in each run's `clone`, a local branch that is the `branch` in the header of an item in `done/`, is checked out in no worktree but one listed above, and whose head is in `base` (`git -C <clone> merge-base --is-ancestor <branch> origin/<base>`). All its commits are in `base`, so nothing is lost.
-   - Files and folders directly in `/tmp` named after an item, `<prefix><N>-…` in any case (`ft96-home-…`, `FT96-gocache`), with the `prefix` of a repository under `root` (default `FT`), owned by the current user, and unchanged.
+   - Files and folders directly in `/tmp` named after an item, `<prefix><N>-…` in any case (`ft96-home-…`, `FT96-gocache`), with the `prefix` of a repository under `ROOT` (default `FT`), owned by the current user, and unchanged.
 
    Two more groups are listed apart, and "all" leaves them out: the owner names each by number.
    - Paths in a `dir`'s `outside` that still exist, are owned by the current user, are unchanged, and are not named after an item (those are listed above). Another program may have made them while a run went on.
-   - Legacy folders: anything directly in `<root>/<OWNER>/<REPO>/` other than `build/`, `review/` and `ship/`, left by runs from before each run had its own `dir`. For a worktree, say whether it has uncommitted changes (`git -C <path> status --porcelain`) or commits on no remote branch (`git -C <path> log --oneline HEAD --not --remotes`), and which clone holds it (`git -C <path> rev-parse --git-common-dir`), or that the clone is gone.
+   - Legacy folders: anything directly in `<ROOT>/<OWNER>/<REPO>/` other than `build/`, `review/` and `ship/`, left by runs from before each run had its own `dir`. For a worktree, say whether it has uncommitted changes (`git -C <path> status --porcelain`) or commits on no remote branch (`git -C <path> log --oneline HEAD --not --remotes`), and which clone holds it (`git -C <path> rev-parse --git-common-dir`), or that the clone is gone.
 
-   Leave all of `/tmp`, `outside` included, out while any run on this machine is going, and say so: its entries cannot be told apart by run. In a shared root, give each entry's owner (`stat -c %U`). When `root` is not `~/.factory` and `~/.factory` still holds run folders, say so: a clean with `root: ~/.factory` lists them. Number the list, give the total, and ask which to delete: all, some by number, or none. With nothing to list, say so and stop.
+   Leave all of `/tmp`, `outside` included, out while any run on this machine is going, and say so: its entries cannot be told apart by run. In a shared root, give each entry's owner (`stat -c %U`). When `ROOT` is not `~/.factory` and `~/.factory` still holds run folders, say so: a clean with `ROOT: ~/.factory` lists them. Number the list, give the total, and ask which to delete: all, some by number, or none. With nothing to list, say so and stop.
 2. **Delete** only what the owner confirmed. Check each again just before: its run is still not going and it is still unchanged (a branch: still merged, and checked out nowhere once the confirmed worktrees are gone); skip one that is not, and name it. Skip one the current user may not delete too, and name its owner. Delete worktrees before branches.
    - A worktree: `git -C <clone> worktree remove --force <path>`, then `git -C <clone> worktree prune`. A legacy worktree whose clone is gone: `rm -rf <path>`.
    - A branch: `git -C <clone> branch -D <branch>`. Not `-d`: it compares with the branch's upstream or the clone's checkout, never `base`, so it refuses a merged branch whose remote ship deleted. The check above is what proves the branch merged.

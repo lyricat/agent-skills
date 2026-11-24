@@ -4,7 +4,7 @@ A scheduled job in which the manager runs one factory **review**: it takes one i
 
 Before using it:
 
-- `gh` must act on the repository with the rights in `github-app.md`, including Issues and Pull requests: write for the comments. The job keeps its own clone in `~/.factory/OWNER/REPO/review/clone`, or under `root` when the prompt sets one (`root: /opt/factory` shares the run folders between users; see Shared root in the skill).
+- `gh` must act on the repository with the rights in `github-app.md`, including Issues and Pull requests: write for the comments. The job keeps its own clone in `~/.factory/OWNER/REPO/review/clone`, or under `ROOT` when the prompt sets one (`ROOT: /opt/factory` shares the run folders between users; see Shared root in the skill).
 - The coder should have the review-code skill; it reviews without it, less thoroughly.
 - Schedule it every 30 minutes or so, beside the build job (`build-cron.md`) and the ship job (`ship-cron.md`). A run reviews one item.
 
@@ -14,10 +14,10 @@ The prompt holds only the run's inputs. Everything the run does is in the skill,
 
 ```
 Run one factory review with $factory.
-run: review
+RUN: review
 REPO: OWNER/REPO
-contact: <who to tell, and how: tg:@name, slack:#channel, or anything else>
-coder: $coder with Codex
+CONTACT: <who to tell, and how: tg:@name, slack:#channel, or anything else>
+CODER: $coder with Codex
 ```
 
-One job per repository; only `REPO` (and perhaps `contact`) differs between them. Settings for one repository belong in that repository's `.factory/factory.toml`, not in the prompt.
+One job per repository; only `REPO` (and perhaps `CONTACT`) differs between them. Settings for one repository belong in that repository's `.factory/factory.toml`, not in the prompt.
