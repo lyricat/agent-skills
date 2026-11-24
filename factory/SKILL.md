@@ -1,6 +1,6 @@
 ---
 name: factory
-description: "Manage a software factory whose features and issues are plain Markdown files in the .factory/ folder of a repository's factory_board branch, the folder a file sits in being its progress. Four runs: build (a coding agent builds one item from new/ and it moves to review/), review (the coding agent reviews one item in review/; without P0 or P1 findings it moves to ready/, with them it goes back to new/ while fix rounds remain), ship (on the owner's word or on a schedule, merge ready/ items into the base branch, tag it and push, moving them to done/, or send them back), clean (on the owner's word, 'factory clean': list the factory's leftover folders on this machine and delete those the owner confirms). Use when a scheduled task or the owner asks for a factory build, review, ship or clean run on a repository whose factory_board branch has .factory/factory.toml. Do not use for repositories without that branch, or for one-off coding tasks."
+description: "Manage a software factory whose features and issues are plain Markdown files in the .factory/ folder of a repository's factory_board branch, the folder a file sits in being its progress. Four runs: build (a coding agent builds one item from new/ and it moves to review/), review (the coding agent reviews one item in review/; without P0 or P1 findings it moves to ready/, with them it goes back to new/ while fix rounds remain), ship (on the owner's word or on a schedule, merge ready/ items into the base branch, tag it and push, moving them to done/, or send them back), clean (on the owner's word, 'factory clean': list what the factory left on this machine, such as temporary files, finished worktrees and merged local branches, and delete what the owner confirms). Use when a scheduled task or the owner asks for a factory build, review, ship or clean run on a repository whose factory_board branch has .factory/factory.toml. Do not use for repositories without that branch, or for one-off coding tasks."
 ---
 
 # Factory
@@ -14,7 +14,7 @@ The board is plain files on their own branch, `factory_board`; code, branches an
 - **build** (scheduled): one item from `new/` is built, or fixed, on its own branch and moves to `review/`.
 - **review** (scheduled): one item in `review/` is reviewed. Without P0 or P1 findings it moves to `ready/`; with them it goes back to `new/` for a fix round while its `round` is below `max_rounds`, else it stays and the owner decides.
 - **ship** (when the owner asks, or scheduled): the owner says which `ready/` items are fine and what to do with the rest, or a scheduled ship takes every `ready/` item whose review still holds. They go through the `ship` actions (merge into `base`, tag, push) and move to `done/`.
-- **clean** (only when the owner asks, "factory clean"): lists the folders the factory left on this machine that can go, and deletes those the owner confirms (Clean).
+- **clean** (only when the owner asks, "factory clean"): lists what the factory left on this machine that can go (temporary files, worktrees and local branches of finished items, leftovers in `/tmp`), and deletes what the owner confirms (Clean).
 
 Each build, review or ship handles one item (ship: the items it takes) and stops. The coder works on its own: it decides what the request leaves open, resolves conflicts, installs what is missing and fixes failing tests, and nobody waits for an answer. Unclear ideas belong in `backlog/`, where the factory does not build them.
 
@@ -29,7 +29,7 @@ The task gives these; otherwise use the defaults:
 - `items` (ship only): `auto` in a scheduled job (`references/ship-cron.md`); otherwise the owner's own words say which items.
 
 Every message, to the contact or as a GitHub comment, uses its template in `references/messages.md`, named below in quotes ("Build started"). If one cannot be sent, put it in the summary and go on. Send only those messages, at the step that names them. Never tell the contact that there is nothing to do, that a run started or found no item, or that the board is unchanged.
-- `dir`: the run's own directory, `~/.factory/<OWNER>/<REPO>/<run>`, created when missing. It holds the run's clone (`clone/`), its lock (`lock/`), its worktrees and their temporary files (`tmp/`; see Temporary files). Each run has its own, so a build and a review can run at once without touching each other's files.
+- `dir`: the run's own directory, `~/.factory/<OWNER>/<REPO>/<run>`, created when missing. It holds the run's clone (`clone/`), its lock (`lock/`), its worktrees, their temporary files (`tmp/`) and the list of `/tmp` paths its runs left (`outside`); see Temporary files. Each run has its own, so a build and a review can run at once without touching each other's files.
 - `repo`: the run's clone, `$dir/clone`, made with `gh repo clone "$REPO" "$dir/clone"` the first time. Never use anyone's working copy. Its own checkout holds `factory_board`; code work happens in worktrees.
 
 Stop and say so when `origin/factory_board` does not exist or has no `.factory/factory.toml`; `references/factory.toml` shows the owner how to set it up.
@@ -125,7 +125,34 @@ Every board change is a commit on `factory_board` in `repo` that touches only `.
 
 ## Temporary files
 
-Everything the coder and the tests write outside the worktree stays in `dir`, so a run can clear it and nothing piles up in `/tmp`. Each worktree `$dir/<name>` has its own `$dir/tmp/<name>`: `mkdir -p` it, and run the coder, `test` and `after_change` in that worktree with `TMPDIR` set to it. The coder's rules (Build, step 4) put throwaway HOMEs, their caches and other temporary files under `$TMPDIR`, never straight in `/tmp`. Each run removes its own at the end (Each run, step 7); one that stopped leaves them to the next run's recovery.
+Everything a run writes outside its worktrees and does not keep stays in `dir`, so a run can clear it and nothing piles up in `/tmp`. A run's `dir` holds only this:
+
+```
+<dir>/
+  clone/  lock/       the run's clone and lock
+  <name>/             a worktree: <ID>-<slug> (build), review-<ID> (review), base (ship)
+  outside             /tmp paths its runs left, one per line (below)
+  tmp/<name>/         one per worktree: its TMPDIR
+    factory/          the manager's own files: the coder's task and output, logs, patches, reports
+    tmp.XXXXXX/       made by mktemp: throwaway HOMEs and their caches, one-run tools (a venv, a scratch module)
+    …                 whatever tools put in TMPDIR
+```
+
+`mkdir -p "$dir/tmp/<name>/factory"`, and run the coder, `test` and `after_change` in that worktree with `TMPDIR` set to `$dir/tmp/<name>`. The coder's rules (Build, step 4) say what goes there. Each run removes its own `$dir/tmp/<name>` at the end (Each run, step 7); one that stopped leaves them to the next run's recovery.
+
+Two things are kept on purpose, in the user's home and outside `dir`: user-level installs (Build, step 4), and the shared download and build caches that package managers and `test` fill (Go's module and build caches, `~/.npm`, `~/.cache/pip`, `~/.cargo`, …). Later runs reuse them. Runs report the installs; nothing in the factory deletes either.
+
+Something may still land in `/tmp`: a test that hardcodes a path there, or a tool that ignores `TMPDIR`. Around each coder call, `test` and `after_change`, list what the current user owns directly in `/tmp`, before and after:
+
+```
+find /tmp -mindepth 1 -maxdepth 1 -user "$(id -u)" | LC_ALL=C sort > "$dir/tmp/<name>/factory/before"
+… the coder, test or after_change …
+find /tmp -mindepth 1 -maxdepth 1 -user "$(id -u)" | LC_ALL=C sort | LC_ALL=C comm -13 "$dir/tmp/<name>/factory/before" -
+```
+
+Keep `LC_ALL=C` on both: in some locales `comm` and `sort` disagree on the order, and `comm` then misses paths.
+
+Append each new path, and each path the coder's report names in `/tmp`, to `$dir/outside` unless it is already there. In the summary, name those not named after the item as "written outside dir". Another run or program may have made some of them at the same time, so the list says where to look, not what the factory made.
 
 Build, review and ship never delete anything in `/tmp` itself: other people and programs share it, and a folder there cannot be told apart from theirs. Only a clean run does, and only what the owner confirmed.
 
@@ -137,7 +164,7 @@ Build, review and ship never delete anything in `/tmp` itself: other people and 
    - `repo` not on `factory_board`: `git checkout factory_board`. Uncommitted changes: `git stash push --include-untracked -m "factory: left by a stopped run <time>"`.
    - Local commits on `factory_board` not on `origin/factory_board`: `git update-ref refs/factory/stopped/<YYYYMMDD-HHMM> factory_board`, then `git reset --hard origin/factory_board` after the fetch below.
    - Worktrees: build keeps its item worktrees (a stopped build goes on there; see Build, step 2). Review and ship remove theirs (`git worktree remove --force`, then `git worktree prune`), first keeping ship's unpushed merge commits as a `refs/factory/stopped/…` ref.
-   - Temporary files: remove each folder in `$dir/tmp/` in which nothing changed in the last 10 minutes (`find <folder> -mmin -10 -print -quit` prints nothing). A newer one belongs to a build still going (see Build), and stays.
+   - Temporary files: remove each folder in `$dir/tmp/` in which nothing changed in the last 10 minutes (`find <folder> -mmin -10 -print -quit` prints nothing), and each file directly in `$dir/tmp/`. A newer folder belongs to a build still going (see Build), and stays. Keep `$dir/outside`.
    - Ship: local tags that origin does not have (`git ls-remote --tags origin`) were made by a stopped ship: `git tag -d` them.
 3. **Update.** `git fetch origin --prune`. Check out `factory_board` (the first time, `git checkout -b factory_board origin/factory_board`) and fast-forward it. Read `.factory/factory.toml`.
 4. **Number** the files in `backlog/` and `new/` named `<slug>.md`, and any file there whose number another item already has (the older keeps it). Take the next numbers above the highest in every folder, oldest file first; set `source` where it applies. Rename with `git mv` in one board commit, `factory: number <ID> <slug>, …`, and push it before anything else.
@@ -163,11 +190,13 @@ An item that does not parse, or that cannot be built at all (it contradicts itse
    - Finish the task yourself. Where the request leaves something open, take a reasonable default and note it; do not stop to ask.
    - If the branch does not merge cleanly with `origin/<base>` (a PR, or a fix round after `base` moved), first merge `origin/<base>` into it and resolve the conflicts, keeping both sides' intent. Never rebase.
    - Implement the plan. Follow the repository's own instructions (`AGENTS.md`, `CLAUDE.md`) and the `read` files.
-   - When a dependency or tool is missing, install it: project dependencies (`go mod download`, `npm install`, …) and user-level tools (`go install`, `pip install --user`, …). No `sudo`, no system package manager, nothing outside the user's home. List in the report only what the repository did not already pin: a tool it does not specify, or a dependency that changes a manifest or lockfile. Restoring what is pinned is routine and not listed: locked packages and their install scripts, modules from `go.sum`, the package manager version the repository specifies.
+   - When a dependency or tool is missing, install it: project dependencies (`go mod download`, `npm install`, …) and user-level tools (`go install`, `pip install --user`, …) that later runs need too. These and the shared caches they fill stay after the run (Temporary files). A tool needed only for this task (a venv, a scratch module, an `npx` one-off) goes under `$TMPDIR` instead. No `sudo`, no system package manager, nothing outside the user's home. List in the report only what the repository did not already pin: a tool it does not specify, or a dependency that changes a manifest or lockfile. Restoring what is pinned is routine and not listed: locked packages and their install scripts, modules from `go.sum`, the package manager version the repository specifies.
    - Run `test` (and `after_change` when needed). When it fails, find the cause, fix it, and run it again.
    - Commit in one or a few commits, each on one topic, titled in the history's style.
-   - Do not push, fetch, run `gh`, touch other branches, change paths in `never`, deploy, or change the user's settings or windows. Scripted tests get a throwaway `HOME`. It, its caches and every other temporary file go under `$TMPDIR` (`mktemp -d`), never straight in `/tmp`.
-   - End with what changed, the decisions taken, the installs, the test result, and what could not be checked.
+   - Do not push, fetch, run `gh`, touch other branches, change paths in `never`, deploy, or change the user's settings or windows.
+   - Make temporary files and folders with `mktemp` or `mktemp -d` and no path, so they land in `$TMPDIR`. Never write to a literal `/tmp/…` path. When something must be in `/tmp`, name it after the item in lower case: `/tmp/<id>-…`, such as `/tmp/ft96-sock`.
+   - Scripted tests get a throwaway `HOME` from `mktemp -d`. Set `XDG_CACHE_HOME`, `XDG_CONFIG_HOME`, `XDG_DATA_HOME` and `XDG_STATE_HOME` inside it, and point every tool cache variable already set in the environment (`GOCACHE`, `GOMODCACHE`, `npm_config_cache`, `PIP_CACHE_DIR`, `CARGO_HOME`, …) inside it too, or those tools keep writing to the real caches.
+   - End with what changed, the decisions taken, the installs, the test result, what could not be checked, and every path written outside the worktree and `$TMPDIR` other than installs and shared caches.
 5. **Tell** the contact about each install the report lists, as soon as the coder returns ("Installed"; "Install needs sudo" for one it could not make). Do not wait for an answer.
 6. **Verify.** `git log <start point>..HEAD` holds only work for this item and merges of `base`; no path in `never` changed against the start point; `test` passes. With no commits, run the coder once more with what is missing; still none: the item cannot be built (above). If `test` fails, give the coder the failure once more. If it still fails, tell the contact ("Tests still failing") and go on: the item moves on with the failure recorded, and the review sees it.
 7. **Push** `git push -u origin factory/<ID>-<slug>`.
@@ -226,14 +255,30 @@ Only on the owner's word ("factory clean"), never in a scheduled job. It deletes
 
 A build, review or ship run is **going** when its `lock/` was touched in the last 10 minutes. Leave out everything in a going run's `dir`.
 
-1. **List** what can go, with each folder's full path and size (`du -sh`):
-   - Temporary folders `~/.factory/<OWNER>/<REPO>/<run>/tmp/<name>` in which nothing changed in the last 10 minutes (`find <folder> -mmin -10 -print -quit` prints nothing).
-   - Build worktrees `…/build/<ID>-<slug>` of items in `done/`, by any of the repository's clones (`git -C <clone> ls-tree --name-only origin/factory_board .factory/done/`); `done/` is final, so an older clone is enough. Review and ship worktrees: `…/review/review-<ID>` and `…/ship/base`.
-   - Folders directly in `/tmp` named after an item, `<prefix><N>-…` in any case (`ft96-home-…`, `FT96-gocache`), with the `prefix` of a repository under `~/.factory/` (default `FT`), owned by the current user, in which nothing changed in the last hour. Leave all of `/tmp` out while any run on this machine is going, and say so: its folders cannot be told apart by run.
+Unchanged means nothing in it changed in the last 10 minutes (`find <path> -mmin -10 -print -quit` prints nothing); in `/tmp`, the last hour (`-mmin -60`). An entry with a `.git` file or folder is a worktree.
 
-   Number the list, give the total, and ask which to delete: all, some by number, or none. With nothing to list, say so and stop.
-2. **Delete** only what the owner confirmed. Check each again just before: its run is still not going and it is still unchanged; skip one that is not, and name it. A worktree: `git -C <clone> worktree remove --force <path>`, then `git -C <clone> worktree prune`. Anything else: `rm -rf <path>`. Delete nothing else: no clones, branches, refs, locks or item files.
+1. **List** what can go, with each one's full path and size (`du -sh`; none for a branch). `done/` is final, so any of the repository's clones can say what is in it (`git -C <clone> ls-tree --name-only origin/factory_board .factory/done/`), even an older one.
+   - Temporary folders `~/.factory/<OWNER>/<REPO>/<run>/tmp/<name>`, unchanged.
+   - Strays: anything else directly in a `dir` or its `tmp/` that the layout in Temporary files does not name, unchanged, and not a worktree.
+   - Build worktrees `…/build/<ID>-<slug>` of items in `done/`. Review and ship worktrees: `…/review/review-<ID>` and `…/ship/base`.
+   - Merged branches: in each run's `clone`, a local branch that is the `branch` in the header of an item in `done/`, is checked out in no worktree but one listed above, and whose head is in `base` (`git -C <clone> merge-base --is-ancestor <branch> origin/<base>`). All its commits are in `base`, so nothing is lost.
+   - Files and folders directly in `/tmp` named after an item, `<prefix><N>-…` in any case (`ft96-home-…`, `FT96-gocache`), with the `prefix` of a repository under `~/.factory/` (default `FT`), owned by the current user, and unchanged.
+
+   Two more groups are listed apart, and "all" leaves them out: the owner names each by number.
+   - Paths in a `dir`'s `outside` that still exist, are owned by the current user, are unchanged, and are not named after an item (those are listed above). Another program may have made them while a run went on.
+   - Legacy folders: anything directly in `~/.factory/<OWNER>/<REPO>/` other than `build/`, `review/` and `ship/`, left by runs from before each run had its own `dir`. For a worktree, say whether it has uncommitted changes (`git -C <path> status --porcelain`) or commits on no remote branch (`git -C <path> log --oneline HEAD --not --remotes`), and which clone holds it (`git -C <path> rev-parse --git-common-dir`), or that the clone is gone.
+
+   Leave all of `/tmp`, `outside` included, out while any run on this machine is going, and say so: its entries cannot be told apart by run. Number the list, give the total, and ask which to delete: all, some by number, or none. With nothing to list, say so and stop.
+2. **Delete** only what the owner confirmed. Check each again just before: its run is still not going and it is still unchanged (a branch: still merged, and checked out nowhere once the confirmed worktrees are gone); skip one that is not, and name it. Delete worktrees before branches.
+   - A worktree: `git -C <clone> worktree remove --force <path>`, then `git -C <clone> worktree prune`. A legacy worktree whose clone is gone: `rm -rf <path>`.
+   - A branch: `git -C <clone> branch -D <branch>`. Not `-d`: it compares with the branch's upstream or the clone's checkout, never `base`, so it refuses a merged branch whose remote ship deleted. The check above is what proves the branch merged.
+   - Anything else: `rm -rf <path>`.
+   - Then drop from each `outside` the lines whose path no longer exists.
+
+   Delete nothing else: no clones, remote branches, unmerged branches, refs, locks or item files.
 3. **Report** what was deleted, what was skipped and why, and the space freed.
+
+Clean never lists what it cannot trace to the factory: temporary files in `/tmp` that are neither named after an item nor in an `outside` list (`go-build…`, `tmp.XXXXXX`), and anything in the shared caches. It never judges a file the factory's by its age alone. The owner removes those by hand.
 
 ## Never
 
@@ -242,7 +287,7 @@ A build, review or ship run is **going** when its `lock/` was touched in the las
 - Commit to `factory_board` anything outside `.factory/`, or merge `factory_board` anywhere.
 - Move an item out of `done/`, into or out of `stop/`, into `backlog/` except as Build and Untrusted text say, or into `done/` except by a ship run; delete items, or delete branches except in Ship, step 6.
 - Edit an earlier section, or sign a section with an owner's name except their own words in a ship run.
-- Work in the owner's checkout, or outside `dir`.
+- Work in the owner's checkout, or outside `dir` beyond what Temporary files allows.
 - Install with `sudo` or a system package manager, run binaries downloaded outside a package manager, or deploy.
 - Commit secrets, user names from the machine, or absolute paths.
 
@@ -263,4 +308,4 @@ When a step fails and the case is not here, go on as far as you can without it, 
 | `test` fails the same way on `base` | Say so in the item's section and the message; do not fix it on this branch. |
 | An install needs `sudo` | Do not install it; tell the contact what is missing and go on without it. |
 | The disk is full in `dir` | Remove worktrees of items in `done/` or `stop/`, not their branches, and their `$dir/tmp/` folders. |
-| `/tmp` is full of folders like `ft96-home-…` or `ft96-gocache` | Left by runs from before Temporary files. Do not delete them: tell the contact that the owner can say "factory clean". |
+| `/tmp` is full of folders like `ft96-home-…` or `ft96-gocache` | Left by runs from before Temporary files, or by a test that hardcodes `/tmp`. Do not delete them: tell the contact that the owner can say "factory clean". |
