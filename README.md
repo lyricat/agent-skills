@@ -52,6 +52,8 @@ board = "web"                        # 默认值；web 由 board-pages.yml 发�
 
 新标签在最高的 `vX.Y.Z` 标签上把补丁号加一，没有时从 `v0.1.0` 开始。全部配置项见 [`factory.toml`](factory/references/factory.toml)。
 
+配套只读 CLI / TUI 管理工具位于 [`factory-cli`](factory-cli/README.md)（基于 Go + Bubble Tea），可在不切换工作区的前提下自动发现 `factory_board` 分支、查看各阶段任务与详情并后台自动刷新。
+
 ## 安装
 
 Codex 可以从 `~/.codex/skills` 加载个人 Skill。在本仓库根目录执行：
