@@ -9,6 +9,7 @@
 | [`review-code`](review-code/SKILL.md) | 审查工作区、提交、分支、补丁或 PR 中的代码变更，识别具体缺陷、代码安全风险、兼容性问题和关键测试缺口。 |
 | [`simplify-code`](simplify-code/SKILL.md) | 在保留行为、公开契约和安全边界的前提下，删除不必要的抽象、分支、状态、间接层、配置和依赖。 |
 | [`factory`](factory/SKILL.md) | 用 `factory_board` 分支上 `.factory/` 目录中的 Markdown 文件管理功能和问题，由编码代理完成构建、审查和合并。 |
+| [`ui-craft`](ui-craft/SKILL.md) | 打磨 Web 界面的细节：对齐设备像素的细线、平滑移动的选中高亮、渐隐的滚动边缘、菜单和对话框的进出动画、统一的控件高度、焦点环与性能。 |
 
 ### `review-code`
 
